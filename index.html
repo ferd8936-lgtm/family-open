@@ -47,8 +47,8 @@ textarea.purpose-box, textarea.plan-box { height: 100px !important; min-height: 
 .btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 18px !important;}
 .btn-cal { margin-left: auto !important; background: #4b5563; }
 
-/* 1. 환경설정 아이콘 버튼 스타일 삽입 */
-.btn-config { background: #94a3b8 !important; width: 42px !important; padding: 8px 0 !important; font-size: 18px; margin: 0 !important; border-radius: 8px; color: #fff; cursor: pointer; border: none; }
+/* 2. 환경설정 아이콘 버튼 스타일 (선명한 톱니바퀴 반영 및 세로폭 일치) */
+.btn-config { background: #94a3b8 !important; width: 42px !important; height: 35px !important; padding: 0 !important; font-size: 18px; margin: 0 !important; border-radius: 8px; color: #fff; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; }
 
 .top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;}
 .top-search input {margin-top: 0; height: 38px; flex: 1;}
@@ -61,7 +61,7 @@ th,td{padding:12px;border-bottom:1px solid var(--line);text-align:center;vertica
 tr.approval-row {cursor: pointer;-webkit-user-select: none;user-select: none;}
 td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .badge{padding:6px 10px;border-radius:6px;color:#fff;font-size:13px;font-weight:700; white-space: nowrap;}
-.badge.ok{background:var(--ok)}.badge.no{background:var(--bad)}.badge.wait{background:var(--wait)}
+.ok{background:var(--ok)}.no{background:var(--bad)}.wait{background:var(--wait)}
 .new-badge {background:#dc2626; color:#fff; font-size:10px; padding:2px 4px; border-radius:4px; margin-right:4px; vertical-align: middle; font-weight: bold;}
 
 .parent-result{margin-top:12px;padding:12px;border-radius:8px;background:#f9fafb;border:1px solid var(--line); line-height: 1.6; margin-bottom: 10px;}
@@ -127,13 +127,14 @@ const urlParams = new URLSearchParams(window.location.search);
 const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
 
-/* 기본 비밀번호 1111 반영 */
 let config = { entryPw: "1111", masterPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!" };
 let route = { page: "list", id: null, date: null };
 let keyword = "";
 let allData = [];
 let calendarData = {};
 let currentCalDate = new Date();
+let tempParentInput = { momC: "", dadC: "" };
+let editingCalId = null;
 let isAuthorized = localStorage.getItem(`auth_${tenantId}`) === "true"; 
 
 const holidays = {
@@ -267,6 +268,20 @@ function render(){
   else if(route.page === "calDetail"){ renderCalendarDetail(app); }
 }
 
+/* 1. 의견 올리기 버튼 작동 수정 반영 */
+function confirmSubmit() {
+  const t = document.getElementById("t").value.trim(); const p = document.getElementById("p").value.trim(); const pl = document.getElementById("pl").value.trim(); const rawC = document.getElementById("c").value.replace(/,/g, '').trim();
+  if(!t || !p || !pl || !rawC) return alert("모든 칸을 입력해주세요.");
+  const m = document.getElementById("pwModal"); m.style.display = "flex";
+  m.innerHTML = `<div class="card" style="text-align:center;"><b>의견 상신 확인</b><p style="margin-top:10px;">이대로 의견을 올릴까요?</p><div class="btn-row"><button class="fit" onclick="submit()">확인</button><button class="fit gray" onclick="closeModal()">취소</button></div></div>`;
+}
+function submit(){
+  const t = document.getElementById("t").value.trim(); const rawC = document.getElementById("c").value.replace(/,/g, '').trim(); const p = document.getElementById("p").value.trim(); const pl = document.getElementById("pl").value.trim();
+  const newPost = { id: Date.now().toString(), title:t, purpose:p, plan:pl, cost:rawC, time:now(), mom: "pending", dad: "pending", momC: "", dadC: "", momTime: "", dadTime: "" };
+  db.ref(`${tenantPath}/approvals`).push(newPost).then(() => { navigate({page:'list'}); closeModal(); });
+}
+
+/* 2. 환경설정 인증 로직 */
 function openConfigAuth() {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
     m.innerHTML = `<div class="card" style="text-align:center;"><b>부모 인증</b><p style="font-size:14px; margin-top:8px;">부모 비밀번호를 입력하세요.</p><input id="confPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
@@ -276,7 +291,9 @@ function verifyConfigAuth() {
     else alert("비밀번호가 일치하지 않습니다.");
 }
 function saveConfig() {
-    db.ref(`${tenantPath}/config`).update({ entryPw: document.getElementById("setEntryPw").value, masterPw: document.getElementById("setMasterPw").value }).then(() => { alert("저장되었습니다."); navigate({page:'list'}); });
+    const entry = document.getElementById("setEntryPw").value.trim();
+    const master = document.getElementById("setMasterPw").value.trim();
+    db.ref(`${tenantPath}/config`).update({ entryPw: entry, masterPw: master }).then(() => { alert("저장되었습니다."); navigate({page:'list'}); });
 }
 
 function openParentAuth(type, id) {
@@ -325,7 +342,7 @@ function openStats(){
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 
-/* 2. 캘린더 화면 미출력 해결을 위해 기존 달력 로직 원형 보존 삽입 */
+/* 3. 캘린더 화면 입력 기능 복구 (참고 코드 로직 삽입) */
 function renderCalendarView(container) {
     const currentYear = currentCalDate.getFullYear(); const currentMonth = currentCalDate.getMonth();
     container.innerHTML = `<div class="cal-wrapper"><div class="cal-header"><button class="gray small" onclick="changeMonth(-1)">◀</button><b style="font-size:20px;">${currentYear}년 ${currentMonth + 1}월</b><button class="gray small" onclick="changeMonth(1)">▶</button></div><div class="cal-container" id="calContainer"><div class="cal-month-view" id="prevMonthView"></div><div class="cal-month-view" id="currMonthView"></div><div class="cal-month-view" id="nextMonthView"></div></div><div class="cal-footer"><button class="gray" onclick="navigate({page:'list'})">게시판 돌아가기</button></div></div>`;
@@ -347,9 +364,21 @@ function renderDayCell(y, m, d, isOther) {
     const date = new Date(y, m, d); const dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     const dayOfWeek = date.getDay(); let cls = isOther ? 'other' : ''; if(new Date().toDateString() === date.toDateString()) cls += ' today';
     if(dayOfWeek === 0) cls += ' sun'; if(dayOfWeek === 6) cls += ' sat';
-    return `<div class="cal-day ${cls}" onclick="navigate({page:'calDetail', date:'${dateKey}'})"><div class="cal-day-num-box"><b>${d}</b></div><div class="cal-event-container"></div></div>`;
+    const events = calendarData[dateKey] ? Object.values(calendarData[dateKey]) : [];
+    const eventHtml = events.map(ev => `<div class="cal-event-item">${esc(ev.title)}</div>`).join('');
+    return `<div class="cal-day ${cls}" onclick="navigate({page:'calDetail', date:'${dateKey}'})"><div class="cal-day-num-box"><b>${d}</b></div><div class="cal-event-container">${eventHtml}</div></div>`;
 }
-function renderCalendarDetail(container) { container.innerHTML = `<div class="card"><h2>${route.date} 일정</h2><p>준비 중...</p><button class="gray" onclick="navigate({page:'calendar'})">뒤로가기</button></div>`; }
+function renderCalendarDetail(container) {
+    const dateKey = route.date;
+    const events = calendarData[dateKey] ? Object.entries(calendarData[dateKey]) : [];
+    container.innerHTML = `<div class="card"><h2>${dateKey} 일정</h2><label>제목</label><input id="calTitle" placeholder="일정 제목"><label>내용</label><textarea id="calContent" rows="3"></textarea><button onclick="saveCal('${dateKey}')">추가하기</button><hr><b style="display:block; margin-bottom:10px;">저장된 일정</b>${events.map(([id, ev]) => `<div style="background:#f9fafb; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;"><div><b>${esc(ev.title)}</b><br><small>${esc(ev.content)}</small></div><button class="small red" style="width:50px;" onclick="doDeleteCal('${dateKey}', '${id}')">삭제</button></div>`).join('') || '<p>일정이 없습니다.</p>'}<button class="gray" onclick="navigate({page:'calendar'})">뒤로가기</button></div>`;
+}
+function saveCal(dateKey) {
+    const title = document.getElementById("calTitle").value.trim(); const content = document.getElementById("calContent").value.trim();
+    if(!title) return alert("제목을 입력하세요.");
+    db.ref(`${tenantPath}/calendar_v3/${dateKey}`).push({ title, content }).then(() => render());
+}
+function doDeleteCal(dateKey, id) { db.ref(`${tenantPath}/calendar_v3/${dateKey}/${id}`).remove().then(() => render()); }
 function changeMonth(diff) { currentCalDate.setMonth(currentCalDate.getMonth() + diff); render(); }
 
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } };
