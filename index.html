@@ -133,18 +133,33 @@ const holidays = { /* 기존 공휴일 데이터 유지 */
     "2027-02-06": { name: "설날", red: true }, "2027-02-07": { name: "설날", red: true }, "2027-02-08": { name: "설날", red: true }, "2027-02-09": { name: "대체공휴일", red: true }, "2027-05-13": { name: "부처님오신날", red: true }, "2027-09-14": { name: "추석", red: true }, "2027-09-15": { name: "추석", red: true }, "2027-09-16": { name: "추석", red: true }
 };
 
-// [SaaS 핵심 로직] 초기화 시 해당 가족의 설정값부터 로드
+// [SaaS 핵심 로직] 해결 단계 2: 강제 로딩 안전장치 추가
+let isInitialized = false;
+
 db.ref(`${BASE_PATH}config`).on("value", (snap) => {
     const val = snap.val();
     if(val) {
         familyConfig = val;
-        PASSWORD = val.masterPw || "7102";
-        ENTRY_PASSWORD = val.entryPw || "5677";
+        PASSWORD = String(val.masterPw || "7102"); 
+        ENTRY_PASSWORD = String(val.entryPw || "5677");
         if(val.headerTitle) document.querySelector('h1').innerText = val.headerTitle;
         if(val.headerDesc) document.getElementById('header-desc').innerText = val.headerDesc;
     }
-    init();
+    // 데이터가 로드되면 초기화 실행
+    if(!isInitialized) {
+        isInitialized = true;
+        init();
+    }
 });
+
+// 안전장치: 파이어베이스 응답이 2초 이상 지연될 경우 기본값으로 강제 실행
+setTimeout(() => {
+    if(!isInitialized) {
+        console.warn("파이어베이스 설정 로딩 지연 - 기본값으로 시작합니다.");
+        isInitialized = true;
+        init();
+    }
+}, 2000);
 
 function init() {
     if(!isAuthorized) {
@@ -170,6 +185,10 @@ function verifyEntryPw() {
     } else {
         alert("비밀번호가 일치하지 않습니다."); 
     }
+}
+
+function closeModal() {
+    document.getElementById("pwModal").style.display = "none";
 }
 
 // [SaaS 핵심 로직] 모든 데이터 참조를 BASE_PATH 하위로 변경
@@ -273,7 +292,6 @@ function render(){
   }
   else if(route.page === "calendar"){ document.body.classList.add("full-view"); renderCalendarView(app); }
   else if(route.page === "calDetail"){ renderCalendarDetail(app); }
-  // [SaaS 확장 기능] 가족 설정 페이지
   else if(route.page === "config"){
     app.innerHTML = `<div class="card">
       <h3>가족 설정 (${FAMILY_ID})</h3>
@@ -302,14 +320,13 @@ function saveConfig() {
     }).then(() => { alert("설정이 저장되었습니다."); navigate({page:'list'}); });
 }
 
-/* --- 데이터 저장 시 BASE_PATH 적용 부분 --- */
 function submit(){
   const t = document.getElementById("t").value.trim();
   const rawC = document.getElementById("c").value.replace(/,/g, '').trim();
   const p = document.getElementById("p").value.trim();
   const pl = document.getElementById("pl").value.trim();
   const newPost = { id: Date.now().toString(), title:t, purpose:p, plan:pl, cost:rawC, time:now(), mom: "pending", dad: "pending", momC: "", dadC: "", momTime: "", dadTime: "" };
-  db.ref(`${BASE_PATH}approvals`).push(newPost).then(() => { navigate({page:'list'}); closeModal(); });
+  db.ref(`${BASE_PATH}approvals`).push(newPost).then(() => { navigate({page:'list'}); });
 }
 
 function saveCal(dateKey) {
@@ -341,9 +358,8 @@ function createNewCalendarEntry(startDate, endDate, repeat, data, existingRepeat
     db.ref(`${BASE_PATH}calendar_v3`).update(updates).then(() => { editingCalId = null; render(); });
 }
 
-/* ... (기존 나머지 함수들은 로직 동일하므로 BASE_PATH만 적용하여 사용) ... */
 function getSmsUrl(text) { const ua = navigator.userAgent.toLowerCase(); return /iphone|ipad|ipod/.test(ua) ? `sms:&body=${encodeURIComponent(text)}` : `sms:?body=${encodeURIComponent(text)}`; }
-function confirmSubmit() { const t = document.getElementById("t").value.trim(); const p = document.getElementById("p").value.trim(); const pl = document.getElementById("pl").value.trim(); const rawC = document.getElementById("c").value.replace(/,/g, '').trim(); if(!t || !p || !pl || !rawC) return alert("모든 칸을 입력해주세요."); const m = document.getElementById("pwModal"); m.style.display = "flex"; m.innerHTML = `<div class="card" style="text-align:center;"><b>의견 상신 확인</b><div class="btn-row"><button class="fit" onclick="submit()">확인</button><button class="fit gray" onclick="closeModal()">취소</button></div></div>`; }
+function confirmSubmit() { const t = document.getElementById("t").value.trim(); const p = document.getElementById("p").value.trim(); const pl = document.getElementById("pl").value.trim(); const rawC = document.getElementById("c").value.replace(/,/g, '').trim(); if(!t || !p || !pl || !rawC) return alert("모든 칸을 입력해주세요."); submit(); }
 function changeMonth(diff) { currentCalDate.setMonth(currentCalDate.getMonth() + diff); render(); }
 function now(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function formatComma(v){ return String(v).replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
@@ -362,7 +378,7 @@ function authParentView(id){
   const logArea = document.getElementById("parentViewLog"); if(logArea) logArea.style.display = "none";
   let h = "";
   ['mom', 'dad'].forEach(who => {
-      const whoKo = who === 'mom' ? '엄마' : '아빠'; const res = r[who]; const isEdit = res && res !== 'pending';
+      const whoKo = who === 'mom' ? '엄마' : '아빠'; const res = r[who]; 
       h += `<div class="card"><b>${whoKo} 의견</b><textarea id="${who}C" rows="3">${r[who+'C'] || ''}</textarea><div class="btn-row"><button class="green" onclick="decide('${r.dbId}','${who}','approve')">찬성</button><button class="red" onclick="decide('${r.dbId}','${who}','reject')">반대</button></div></div>`;
   });
   document.getElementById("parentArea").innerHTML = h;
@@ -379,6 +395,127 @@ function openStats(){
   m.innerHTML = `<div class="card"><h3>월간 통계</h3><div class="table-wrapper">${sorted.map(k=>`<div class="stat-item"><b>${k}</b><br>✅ 찬성: ${stats[k].app}건 (${stats[k].appS.toLocaleString()}원) <br>❌ 반대: ${stats[k].rej}건 (${stats[k].rejS.toLocaleString()}원)</div>`).join("")}</div><button onclick="closeModalStat()">닫기</button></div>`;
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
+
+/* 캘린더 관련 렌더링 함수들 (기존 로직 유지) */
+function renderCalendarView(container) {
+    const year = currentCalDate.getFullYear(); const month = currentCalDate.getMonth();
+    container.innerHTML = `
+        <div class="cal-wrapper">
+            <div class="cal-header">
+                <button onclick="changeMonth(-1)">◀</button>
+                <div style="font-size:18px; font-weight:bold;">${year}년 ${month + 1}월</div>
+                <button onclick="changeMonth(1)">▶</button>
+                <button onclick="navigate({page:'list'})" style="margin-left:10px;">🏠</button>
+            </div>
+            <div class="cal-grid">
+                ${['일','월','화','수','목','금','토'].map(d => `<div class="cal-day-label">${d}</div>`).join('')}
+                ${getCalendarDays(year, month)}
+            </div>
+            <div class="cal-footer">
+                <button onclick="navigate({page:'calDetail', date:'${now().split(' ')[0]}'})">+ 일정 추가</button>
+            </div>
+        </div>
+    `;
+}
+
+function getCalendarDays(year, month) {
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const prevLastDate = new Date(year, month, 0).getDate();
+    let days = [];
+    for (let i = firstDay - 1; i >= 0; i--) days.push(renderDay(year, month - 1, prevLastDate - i, true));
+    for (let i = 1; i <= lastDate; i++) days.push(renderDay(year, month, i));
+    const nextDays = 42 - days.length;
+    for (let i = 1; i <= nextDays; i++) days.push(renderDay(year, month + 1, i, true));
+    return days.join('');
+}
+
+function renderDay(y, m, d, isOther = false) {
+    const date = new Date(y, m, d);
+    const dateKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const day = date.getDay();
+    let cls = isOther ? 'other ' : '';
+    if (day === 0) cls += 'sun'; else if (day === 6) cls += 'sat';
+    const hKey = `${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    const holiday = holidays[hKey] || holidays[dateKey];
+    if (holiday && holiday.red) cls += ' holiday';
+    const events = calendarData[dateKey] || {};
+    return `
+        <div class="cal-day ${cls}" onclick="navigate({page:'calDetail', date:'${dateKey}'})">
+            <div class="cal-day-num-box">
+                <span>${d}</span>
+                ${holiday ? `<span class="holiday-text ${holiday.red ? 'holiday-red' : 'holiday-black'}">${holiday.name}</span>` : ''}
+            </div>
+            <div class="cal-event-container">
+                ${Object.keys(events).map(id => `<div class="cal-event-item">${esc(events[id].title)}</div>`).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderCalendarDetail(container) {
+    const dateKey = route.date;
+    const events = calendarData[dateKey] || {};
+    container.innerHTML = `
+        <div class="card">
+            <h3>${dateKey} 일정</h3>
+            <div id="calEventList">
+                ${Object.keys(events).map(id => `
+                    <div class="stat-item">
+                        <b>${esc(events[id].time)} ${esc(events[id].title)}</b>
+                        <p>${esc(events[id].content)}</p>
+                        <button class="small gray" onclick="editCalEvent('${dateKey}','${id}')">수정</button>
+                        <button class="small red" onclick="deleteCal('${dateKey}','${id}')">삭제</button>
+                    </div>
+                `).join('')}
+            </div>
+            <hr>
+            <label>일정 제목</label><input id="calTitle" placeholder="일정 제목">
+            <label>시간</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input id="calTime" type="time" value="09:00" style="flex:1;">
+                <label style="margin:0;"><input type="checkbox" id="calAllDay"> 하루종일</label>
+            </div>
+            <label>설명</label><textarea id="calContent" placeholder="상세 내용"></textarea>
+            <div class="flex-align-center">
+                <input type="checkbox" id="calRepeat"> <label for="calRepeat">기간 설정 (반복)</label>
+            </div>
+            <div id="repeatArea" style="display:none; margin-top:10px;">
+                <label>시작일</label><input type="date" id="calStartDate" value="${dateKey}">
+                <label>종료일</label><input type="date" id="calEndDate" value="${dateKey}">
+            </div>
+            <div class="btn-row">
+                <button onclick="saveCal('${dateKey}')">저장</button>
+                <button class="gray" onclick="navigate({page:'calendar'})">취소</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('calRepeat').onchange = (e) => { document.getElementById('repeatArea').style.display = e.target.checked ? 'block' : 'none'; };
+    document.getElementById('calStartDate').value = dateKey;
+    document.getElementById('calEndDate').value = dateKey;
+}
+
+function editCalEvent(date, id) {
+    const ev = calendarData[date][id];
+    editingCalId = id;
+    document.getElementById('calTitle').value = ev.title;
+    document.getElementById('calTime').value = ev.time;
+    document.getElementById('calContent').value = ev.content;
+    document.getElementById('calAllDay').checked = ev.isAllDay;
+    if(ev.repeated) {
+        document.getElementById('calRepeat').checked = true;
+        document.getElementById('repeatArea').style.display = 'block';
+        document.getElementById('calStartDate').value = ev.startDate;
+        document.getElementById('calEndDate').value = ev.endDate;
+    }
+}
+
+function deleteCal(date, id) {
+    if(confirm("일정을 삭제할까요?")) {
+        db.ref(`${BASE_PATH}calendar_v3/${date}/${id}`).remove();
+    }
+}
+
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } };
 </script>
 </body>
