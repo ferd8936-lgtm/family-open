@@ -125,13 +125,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* [끼워넣기] 공간 분리(Tenant)를 위한 URL 파라미터 추출 및 경로 설정 */
+/* [삽입] 데이터 독립성 유지를 위한 테넌트 식별 로직 */
 const urlParams = new URLSearchParams(window.location.search);
 const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
 
-/* 기본값 설정 (비밀번호 1111) */
-let config = { entryPw: "1111", masterPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "엄마와 아빠는 언제나 너의 멋진 계획을 응원해!" };
+/* 기본 설정 (DB 값에 따라 동적으로 변경됨) */
+let config = { entryPw: "1111", masterPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!" };
 let route = { page: "list", id: null, date: null };
 let keyword = "";
 let allData = [];
@@ -145,7 +145,7 @@ const holidays = {
     "01-01": { name: "신정", red: true }, "03-01": { name: "삼일절", red: true }, "05-01": { name: "근로자의날", red: false }, "05-05": { name: "어린이날", red: true }, "05-08": { name: "어버이날", red: false }, "06-06": { name: "현충일", red: true }, "08-15": { name: "광복절", red: true }, "10-01": { name: "국군의날", red: false }, "10-03": { name: "개천절", red: true }, "10-09": { name: "한글날", red: true }, "12-25": { name: "성탄절", red: true }
 };
 
-/* [끼워넣기] 테넌트별 설정 로드 및 헤더 반영 */
+/* [삽입] 각 공간별 설정 데이터 실시간 수신 및 UI 반영 */
 db.ref(`${tenantPath}/config`).on("value", (snap) => {
     if(snap.exists()) {
         config = snap.val();
@@ -155,7 +155,7 @@ db.ref(`${tenantPath}/config`).on("value", (snap) => {
     }
 });
 
-/* [수정] 데이터 경로를 테넌트별 경로로 변경 */
+/* [수정] 데이터 참조 경로를 테넌트별 전용 경로로 변경하여 섞임 방지 */
 db.ref(`${tenantPath}/approvals`).on("value", (snapshot) => {
   const val = snapshot.val();
   allData = val ? Object.keys(val).map(k => ({...val[k], dbId: k})) : [];
@@ -166,7 +166,7 @@ db.ref(`${tenantPath}/approvals`).on("value", (snapshot) => {
   }
 });
 
-/* [수정] 캘린더 데이터 경로 변경 */
+/* [수정] 캘린더 데이터 경로 테넌트 반영 */
 db.ref(`${tenantPath}/calendar_v3`).on("value", (snapshot) => {
   calendarData = snapshot.val() || {};
   if(isAuthorized && (route.page === 'calendar' || route.page === 'calDetail')) render();
@@ -241,7 +241,7 @@ function render(){
       </div>`;
   } 
   else if(route.page === "config"){
-      /* 2. 환경설정 페이지 끼워넣기 */
+      /* 2. 환경설정 페이지 삽입 */
       app.innerHTML = `
         <div class="card">
             <h3>환경설정 (${tenantId})</h3>
@@ -290,7 +290,7 @@ function render(){
   else if(route.page === "calDetail"){ renderCalendarDetail(app); }
 }
 
-/* [끼워넣기] 환경설정 진입 및 부모 권한 인증 함수 */
+/* [삽입] 환경설정 진입 및 부모 권한 인증 통합 함수 */
 function openConfigAuth() {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
     m.innerHTML = `<div class="card" style="text-align:center;"><b>부모 인증</b><p style="font-size:14px; margin-top:8px;">부모 비밀번호를 입력하세요.</p><input id="confPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
@@ -305,7 +305,7 @@ function saveConfig() {
     db.ref(`${tenantPath}/config`).update({ entryPw: entry, masterPw: master }).then(() => { alert("저장되었습니다."); navigate({page:'list'}); });
 }
 
-/* [끼워넣기] 부모 인증 통합 관리 (승인/삭제용) */
+/* [삽입] 부모 인증 통합 관리 (승인 및 삭제용) */
 function openParentAuth(type, id) {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
     m.innerHTML = `<div class="card" style="text-align:center;"><b>부모 인증</b><input id="parentPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyParentAuth('${type}', '${id}')">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
