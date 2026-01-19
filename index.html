@@ -11,94 +11,101 @@
 <script src="https://cdn.jsdelivr.net/npm/sass.js@0.11.1/dist/sass.sync.js"></script>
 
 <style type="text/scss">
+/* [삽입] 폰트 경로 보정 및 Sass 변수 선언 */
 @font-face {
     font-family: 'NexonLv2Gothic';
-    src: url('NexonLv2Gothic_2.ttf') format('truetype');
+    src: url('./NexonLv2Gothic_2.ttf') format('truetype'),
+         url('NexonLv2Gothic_2.ttf') format('truetype');
+    font-display: swap;
 }
-:root{--bg:#f8fafc;--card:#ffffff;--line:#e5e7eb;--brand:#6366f1;--ok:#16a34a;--bad:#dc2626;--wait:#d97706;}
-*{box-sizing:border-box}
-html, body { overscroll-behavior-y: none; height: 100%; }
-body, button, input, textarea {margin:0; font-family:'NexonLv2Gothic', sans-serif; background:var(--bg);}
-header{padding:20px 16px;text-align:center;background:#fff;border-bottom:1px solid var(--line);}
-header h1 {margin:0; font-size:24px; font-weight:700; cursor: pointer; display: inline-block;}
-header p {margin:8px 0 0; font-size:16.8px; color:#666; line-height: 1.4;}
 
+$bg:#f8fafc; $card:#ffffff; $line:#e5e7eb; $brand:#6366f1; $ok:#16a34a; $bad:#dc2626; $wait:#d97706;
+
+*{box-sizing:border-box}
+html, body { overscroll-behavior-y: none; height: 100%; -webkit-font-smoothing: antialiased; }
+body, button, input, textarea {margin:0; font-family:'NexonLv2Gothic', sans-serif !important; background:$bg;}
+header{padding:20px 16px;text-align:center;background:#fff;border-bottom:1px solid $line;
+    h1 {margin:0; font-size:24px; font-weight:700; cursor: pointer; display: inline-block;}
+    p {margin:8px 0 0; font-size:16.8px; color:#666; line-height: 1.4;}
+}
 main{max-width:1100px;margin:auto;padding:16px;}
 body.full-view main { max-width: 100%; padding: 0; height: calc(100% - 60px); }
 body.full-view header { border-bottom: none; }
+.card{background:$card;border:1px solid $line;border-radius:10px;padding:16px;margin-bottom:16px;}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px;}
+button, .sms-btn{display:block; width:100%; padding:9px 16px;border:none;border-radius:8px;background:$brand;color:#fff;font-weight:600;cursor:pointer;margin:6px 0; text-align:center; text-decoration:none; font-size:16px; font-family: inherit;
+    &.gray{background:#e5e7eb;color:#111}
+    &.green{background:$ok}
+    &.red{background:$bad}
+    &.fit {width: auto; min-width: 80px; display: inline-block; margin: 0 8px 0 0; padding: 9px 20px;}
+    &.small{padding: 4px 10px; font-size: 13px; margin: 0;}
+    &.btn-config { background: #94a3b8 !important; width: 42px !important; padding: 8px 0 !important; font-size: 18px; margin: 0 !important; }
+}
 
-button, .sms-btn{display:block; width:100%; padding:9px 16px;border:none;border-radius:8px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;margin:6px 0; text-align:center; text-decoration:none; font-size:16px; font-family: inherit;}
-button.gray, .sms-btn.gray{background:#e5e7eb;color:#111}
-button.green{background:var(--ok)}
-button.red{background:var(--bad)}
-
-button.fit {width: auto; min-width: 80px; display: inline-block; margin: 0 8px 0 0; padding: 9px 20px;}
 .btn-parent-input { width: auto !important; padding: 10px 30px !important; }
-
-button.small{padding: 4px 10px; font-size: 13px; margin: 0;}
-input, textarea {width:100%;padding:12px;border-radius:8px;border:1px solid var(--line);margin-top:6px;line-height:1.4;letter-spacing: -0.5px !important;font-size: 16px; color: #333;font-family: inherit; background: transparent;}
-input:disabled, textarea:disabled { background: transparent; color: #333; border-color: #eee; }
-input::placeholder, textarea::placeholder { color: #aaa; }
+input, textarea {width:100%;padding:12px;border-radius:8px;border:1px solid $line;margin-top:6px;line-height:1.4;letter-spacing: -0.5px !important;font-size: 16px; color: #333;font-family: inherit; background: transparent;
+    &:disabled { background: transparent; color: #333; border-color: #eee; }
+    &::placeholder { color: #aaa; }
+}
 label{font-weight:600;margin-top:14px;display:flex; align-items: center; justify-content: space-between;}
-
 textarea.purpose-box, textarea.plan-box { height: 100px !important; min-height: 100px !important; overflow-y: auto !important; resize: none; }
-
 .top-actions {display:flex; gap:8px; margin-bottom:12px; justify-content: flex-start; align-items: center;}
 .btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 18px !important;}
 .btn-cal { margin-left: auto !important; background: #4b5563; }
-
-/* 1. 환경설정 아이콘 버튼 스타일 */
-.btn-config { background: #94a3b8 !important; width: 42px !important; padding: 8px 0 !important; font-size: 18px; margin: 0 !important; border-radius: 8px; color: #fff; cursor: pointer; border: none; }
-
-.top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;}
-.top-search input {margin-top: 0; height: 38px; flex: 1;}
-.top-search button {height: 38px; margin: 0; min-width: 60px; width: 60px; padding: 0; white-space: nowrap;}
-
-.table-wrapper {max-height: 540px;overflow-y: auto;border: 1px solid var(--line);border-radius: 8px;}
+.top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;
+    input {margin-top: 0; height: 38px; flex: 1;}
+    button {height: 38px; margin: 0; min-width: 60px; width: 60px; padding: 0; white-space: nowrap;}
+}
+.table-wrapper {max-height: 540px;overflow-y: auto;border: 1px solid $line;border-radius: 8px;}
 table{width:100%; border-collapse:collapse; position: relative; table-layout: fixed;}
-thead th {position: sticky;top: 0;background: #fdfdfd;z-index: 10;border-bottom: 2px solid var(--line);}
-th,td{padding:12px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle;}
+thead th {position: sticky;top: 0;background: #fdfdfd;z-index: 10;border-bottom: 2px solid $line;}
+th,td{padding:12px;border-bottom:1px solid $line;text-align:center;vertical-align:middle;}
 tr.approval-row {cursor: pointer;-webkit-user-select: none;user-select: none;}
 td.title{text-align:left; line-height:1.35; word-break: break-all;}
-.badge{padding:6px 10px;border-radius:6px;color:#fff;font-size:13px;font-weight:700; white-space: nowrap;}
-.ok{background:var(--ok)}.no{background:var(--bad)}.wait{background:var(--wait)}
+.badge{padding:6px 10px;border-radius:6px;color:#fff;font-size:13px;font-weight:700; white-space: nowrap;
+    &.ok{background:$ok} &.no{background:$bad} &.wait{background:$wait}
+}
 .new-badge {background:#dc2626; color:#fff; font-size:10px; padding:2px 4px; border-radius:4px; margin-right:4px; vertical-align: middle; font-weight: bold;}
-
-.parent-result{margin-top:12px;padding:12px;border-radius:8px;background:#f9fafb;border:1px solid var(--line); line-height: 1.6; margin-bottom: 10px;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:16px;z-index: 1000;}
-.modal .card{width:min(480px,100%); max-height: 85vh; overflow-y: auto;}
-.btn-row {display: flex; gap: 10px; margin-top: 20px; justify-content: center;}
-.btn-row button, .btn-row .sms-btn {flex: 1; margin: 0;}
+.parent-result{margin-top:12px;padding:12px;border-radius:8px;background:#f9fafb;border:1px solid $line; line-height: 1.6; margin-bottom: 10px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:16px;z-index: 1000;
+    .card{width:min(480px,100%); max-height: 85vh; overflow-y: auto;}
+}
+.btn-row {display: flex; gap: 10px; margin-top: 20px; justify-content: center;
+    button, .sms-btn {flex: 1; margin: 0;}
+}
 .view-time-header {font-size: 14px;color: #666;margin-bottom: 10px;text-align: right;}
 
 .cal-wrapper { background: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; touch-action: none; position: relative; width: 100%; }
 .cal-container { display: flex; width: 300%; flex: 1; min-height: 0; transition: transform 0.3s ease-out; }
 .cal-month-view { width: 33.333%; height: 100%; display: flex; flex-direction: column; }
-.cal-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #fff; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-.cal-header button { width: 34px !important; height: 34px; padding: 0 !important; font-size: 14px; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, 1fr); background: var(--line); gap: 1px; flex: 1; border-bottom: 1px solid var(--line); width: 100%; overflow: hidden; }
+.cal-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #fff; border-bottom: 1px solid $line; flex-shrink: 0;
+    button { width: 34px !important; height: 34px; padding: 0 !important; font-size: 14px; }
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, 1fr); background: $line; gap: 1px; flex: 1; border-bottom: 1px solid $line; width: 100%; overflow: hidden; }
 .cal-day-label { background: #fdfdfd; padding: 8px 0; text-align: center; font-size: 13px; font-weight: bold; }
-.cal-day { background: #fff; padding: 4px; font-size: 13.2px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; font-family: 'NexonLv2Gothic', sans-serif; }
+.cal-day { background: #fff; padding: 4px; font-size: 13.2px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; font-family: 'NexonLv2Gothic', sans-serif;
+    &.sun, &.holiday { color: red; }
+    &.sat { color: blue; }
+    &.other { color: #ccc !important; background: #fafafa; }
+    &.today { background: #fff; outline: 1px solid #000; outline-offset: -1px; z-index: 1; }
+}
 .cal-day-num-box { display: flex; align-items: center; gap: 4px; }
-.cal-day.sun, .cal-day.holiday { color: red; }
-.cal-day.sat { color: blue; }
-.cal-day.other { color: #ccc !important; background: #fafafa; }
-.cal-day.today { background: #fff; outline: 1px solid #000; outline-offset: -1px; z-index: 1; }
-.holiday-text { font-size: 10.8px; font-weight: bold; line-height: 1; display: inline-block; font-family: 'NexonLv2Gothic', sans-serif; margin-left: 2px; white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 75%; }
-.holiday-red { color: red; }
-.holiday-black { color: black; }
+.holiday-text { font-size: 10.8px; font-weight: bold; line-height: 1; display: inline-block; font-family: 'NexonLv2Gothic', sans-serif; margin-left: 2px; white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 75%;
+    &.holiday-red { color: red; }
+    &.holiday-black { color: black; }
+}
 .cal-event-container { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; flex: 1; }
-.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip; }
+.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip;
+    &.repeated { background-color: #fef9c3; }
+    &.multi-day { background-color: #dcfce7; }
+}
 .many-events .cal-event-item { -webkit-line-clamp: 1; }
-.cal-event-item.repeated { background-color: #fef9c3; }
-.cal-event-item.multi-day { background-color: #dcfce7; }
 .btn-repeat-action { background: #fff !important; color: #000 !important; border: 1px solid var(--line) !important; margin: 4px 0 !important; font-weight: 500 !important; width: 100%; }
 .cal-footer { padding: 10px 15px; background: #fff; flex-shrink: 0; border-top: 1px solid var(--line); }
-.flex-align-center { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.flex-align-center input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; }
-.flex-align-center label { margin: 0; cursor: pointer; font-weight: 500; }
+.flex-align-center { display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+    label { margin: 0; cursor: pointer; font-weight: 500; }
+}
 .stat-item {border: 1px solid var(--line); border-radius: 8px; padding: 15px; margin-bottom: 10px; line-height: 1.6;}
 </style>
 
@@ -126,7 +133,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* 테넌트 식별 및 경로 설정 */
 const urlParams = new URLSearchParams(window.location.search);
 const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
@@ -145,7 +151,6 @@ const holidays = {
     "01-01": { name: "신정", red: true }, "03-01": { name: "삼일절", red: true }, "05-01": { name: "근로자의날", red: false }, "05-05": { name: "어린이날", red: true }, "05-08": { name: "어버이날", red: false }, "06-06": { name: "현충일", red: true }, "08-15": { name: "광복절", red: true }, "10-01": { name: "국군의날", red: false }, "10-03": { name: "개천절", red: true }, "10-09": { name: "한글날", red: true }, "12-25": { name: "성탄절", red: true }
 };
 
-/* 설정 데이터 수신 및 헤더 반영 */
 db.ref(`${tenantPath}/config`).on("value", (snap) => {
     if(snap.exists()) {
         config = snap.val();
@@ -155,14 +160,12 @@ db.ref(`${tenantPath}/config`).on("value", (snap) => {
     }
 });
 
-/* 게시글 데이터 로드 */
 db.ref(`${tenantPath}/approvals`).on("value", (snapshot) => {
   const val = snapshot.val();
   allData = val ? Object.keys(val).map(k => ({...val[k], dbId: k})) : [];
   if(isAuthorized && (route.page === "list" || route.page === "view")) render();
 });
 
-/* 캘린더 데이터 로드 */
 db.ref(`${tenantPath}/calendar_v3`).on("value", (snapshot) => {
   calendarData = snapshot.val() || {};
   if(isAuthorized && (route.page === 'calendar' || route.page === 'calDetail')) render();
@@ -216,10 +219,9 @@ function render(){
           <tbody>
             ${displayData.map((r,i)=>{
               const status = getStatus(r);
-              const isNew = !readList.includes(r.id) && status === '대기';
               return `<tr class="approval-row" onclick="navigate({page:'view', id:'${r.id}'})">
                   <td>${displayData.length - i}</td>
-                  <td class="title"><div>${isNew ? '<span class="new-badge">NEW</span>' : ''}${esc(r.title)}</div><small style="color:#888;">${r.time}</small></td>
+                  <td class="title"><div>${esc(r.title)}</div><small style="color:#888;">${r.time}</small></td>
                   <td>${badge(status)}</td>
                 </tr>`;
             }).join("")}
@@ -330,8 +332,8 @@ function decide(dbId, who, val){
 }
 function askDelete(dbId){ openParentAuth('delete', dbId); }
 function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
-function openStats(){ /* 통계 로직 */ }
-function renderCalendarView(container) { /* 캘린더 로직 */ }
+function openStats(){ /* 통계 */ }
+function renderCalendarView(container) { /* 캘린더 */ }
 
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } };
 </script>
