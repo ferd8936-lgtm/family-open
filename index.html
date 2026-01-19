@@ -106,14 +106,14 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 <body>
 <header id="main-header">
     <h1 onclick="goHome()">똑똑!! 가족 게시판</h1>
-    <p id="header-desc">엄마와 아빠는 언제나 너의 멋진 계획을 응원해!</p>
+    <p id="header-desc">데이터 로딩 중...</p>
 </header>
 <main id="app">데이터 로딩 중...</main>
 <div id="pwModal" class="modal"></div>
 <div id="statModal" class="modal"></div>
 
 <script>
-/* [교체] 새 프로젝트의 firebaseConfig 반영 */
+/* [교체] 복사하신 새 프로젝트의 firebaseConfig 반영 */
 const firebaseConfig = {
   apiKey: "AIzaSyAjCKEt2UNVfLZx2V5oHuTpYO92MQSXXhU",
   authDomain: "family-multi-space.firebaseapp.com",
@@ -126,7 +126,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* [삽입] 독립 데이터 경로 설정을 위한 로직 */
+/* URL 파라미터에서 f 값 추출 (없으면 default 사용) */
 const urlParams = new URLSearchParams(window.location.search);
 const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
@@ -145,7 +145,7 @@ const holidays = {
     "01-01": { name: "신정", red: true }, "03-01": { name: "삼일절", red: true }, "05-01": { name: "근로자의날", red: false }, "05-05": { name: "어린이날", red: true }, "05-08": { name: "어버이날", red: false }, "06-06": { name: "현충일", red: true }, "08-15": { name: "광복절", red: true }, "10-01": { name: "국군의날", red: false }, "10-03": { name: "개천절", red: true }, "10-09": { name: "한글날", red: true }, "12-25": { name: "성탄절", red: true }
 };
 
-/* [삽입] 테넌트별 설정 실시간 동기화 */
+// 파이버베이스에서 테넌트별 설정 실시간 로드
 db.ref(`${tenantPath}/config`).on("value", (snap) => {
     if(snap.exists()) {
         config = snap.val();
@@ -155,18 +155,14 @@ db.ref(`${tenantPath}/config`).on("value", (snap) => {
     }
 });
 
-/* [수정] 데이터 경로에 테넌트 반영 */
+// 테넌트별 게시글 데이터 로드
 db.ref(`${tenantPath}/approvals`).on("value", (snapshot) => {
   const val = snapshot.val();
   allData = val ? Object.keys(val).map(k => ({...val[k], dbId: k})) : [];
-  const parentArea = document.getElementById("parentArea");
-  const isInputting = parentArea && parentArea.innerHTML !== "";
-  if(isAuthorized && (route.page === "list" || route.page === "view")) {
-      if(!isInputting) render(); 
-  }
+  if(isAuthorized && (route.page === "list" || route.page === "view")) render();
 });
 
-/* [수정] 캘린더 데이터 경로에 테넌트 반영 */
+// 테넌트별 캘린더 데이터 로드
 db.ref(`${tenantPath}/calendar_v3`).on("value", (snapshot) => {
   calendarData = snapshot.val() || {};
   if(isAuthorized && (route.page === 'calendar' || route.page === 'calDetail')) render();
@@ -188,9 +184,9 @@ function verifyEntryPw() {
 
 function goHome() { navigate({page:'list'}); }
 function navigate(p, push=true){ 
-  route = p; 
-  if(push) history.pushState(p, "");
-  render(); 
+    route = p; 
+    if(push) history.pushState(p, "");
+    render(); 
 }
 
 function render(){
@@ -338,8 +334,8 @@ function decide(dbId, who, val){
 }
 function askDelete(dbId){ openParentAuth('delete', dbId); }
 function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
-function openStats(){ /* 기존 로직 유지 */ }
-function renderCalendarView(container) { /* 기존 로직 유지 */ }
+function openStats(){ /* 통계 로직 */ }
+function renderCalendarView(container) { /* 캘린더 로직 */ }
 
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } };
 </script>
