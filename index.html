@@ -9,7 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <style>
-/* [삽입] 참고 코드를 바탕으로 한 표준 CSS 및 폰트 설정 */
 @font-face {
     font-family: 'NexonLv2Gothic';
     src: url('NexonLv2Gothic_2.ttf') format('truetype');
@@ -48,7 +47,7 @@ textarea.purpose-box, textarea.plan-box { height: 100px !important; min-height: 
 .btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 18px !important;}
 .btn-cal { margin-left: auto !important; background: #4b5563; }
 
-/* ⚙️ 환경설정 버튼 디자인 삽입 */
+/* 1. 환경설정 아이콘 버튼 스타일 삽입 */
 .btn-config { background: #94a3b8 !important; width: 42px !important; padding: 8px 0 !important; font-size: 18px; margin: 0 !important; border-radius: 8px; color: #fff; cursor: pointer; border: none; }
 
 .top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;}
@@ -112,7 +111,6 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 <div id="statModal" class="modal"></div>
 
 <script>
-/* [끼워넣기] 새 프로젝트 프로젝트 연결 정보 */
 const firebaseConfig = {
   apiKey: "AIzaSyAjCKEt2UNVfLZx2V5oHuTpYO92MQSXXhU",
   authDomain: "family-multi-space.firebaseapp.com",
@@ -125,26 +123,23 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* [끼워넣기] 공간 분리 로직 */
 const urlParams = new URLSearchParams(window.location.search);
 const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
 
+/* 기본 비밀번호 1111 반영 */
 let config = { entryPw: "1111", masterPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!" };
 let route = { page: "list", id: null, date: null };
 let keyword = "";
 let allData = [];
 let calendarData = {};
 let currentCalDate = new Date();
-let tempParentInput = { momC: "", dadC: "" };
-let editingCalId = null;
 let isAuthorized = localStorage.getItem(`auth_${tenantId}`) === "true"; 
 
 const holidays = {
     "01-01": { name: "신정", red: true }, "03-01": { name: "삼일절", red: true }, "05-01": { name: "근로자의날", red: false }, "05-05": { name: "어린이날", red: true }, "05-08": { name: "어버이날", red: false }, "06-06": { name: "현충일", red: true }, "08-15": { name: "광복절", red: true }, "10-01": { name: "국군의날", red: false }, "10-03": { name: "개천절", red: true }, "10-09": { name: "한글날", red: true }, "12-25": { name: "성탄절", red: true }
 };
 
-/* [끼워넣기] 테넌트 설정 및 데이터 수신 경로 수정 */
 db.ref(`${tenantPath}/config`).on("value", (snap) => {
     if(snap.exists()) {
         config = snap.val();
@@ -224,13 +219,12 @@ function render(){
       </div>`;
   } 
   else if(route.page === "config"){
-      /* [끼워넣기] 환경설정 페이지 삽입 */
       app.innerHTML = `
         <div class="card">
             <h3>환경설정 (${tenantId})</h3>
             <label>접속 비밀번호 (최초 접속용)</label>
             <input id="setEntryPw" type="text" value="${config.entryPw}">
-            <label>부모 비밀번호 (승인 및 설정용)</label>
+            <label>부모 비밀번호 (설정/승인용)</label>
             <input id="setMasterPw" type="text" value="${config.masterPw}">
             <div class="btn-row">
                 <button onclick="saveConfig()">저장하기</button>
@@ -275,7 +269,7 @@ function render(){
 
 function openConfigAuth() {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
-    m.innerHTML = `<div class="card" style="text-align:center;"><b>부모 인증</b><input id="confPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
+    m.innerHTML = `<div class="card" style="text-align:center;"><b>부모 인증</b><p style="font-size:14px; margin-top:8px;">부모 비밀번호를 입력하세요.</p><input id="confPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
 }
 function verifyConfigAuth() {
     if(document.getElementById("confPw").value === String(config.masterPw)) { closeModal(); navigate({page:'config'}); }
@@ -324,11 +318,39 @@ function decide(dbId, who, val){
 }
 function askDelete(dbId){ openParentAuth('delete', dbId); }
 function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
-function openStats(){ /* 기존 통계 로직 */ }
-function renderCalendarView(container) { /* 기존 캘린더 로직 */ }
-function renderMonthGrid(dateObj, targetElement) { /* 기존 캘린더 로직 */ }
-function renderDayCell(y, m, d, isOther) { /* 기존 캘린더 로직 */ }
-function renderCalendarDetail(container) { /* 기존 캘린더 로직 */ }
+function openStats(){ 
+    const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const key = item.time.substring(0,7).replace("-","년 ") + "월"; if(!stats[key]) stats[key] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[key].app++; stats[key].appS+=c; } else { stats[key].rej++; stats[key].rejS+=c; } });
+    const sorted = Object.keys(stats).sort().reverse(), m = document.getElementById("statModal"); m.style.display="flex";
+    m.innerHTML = `<div class="card"><h3>월간 통계</h3><div class="table-wrapper">${sorted.map(k=>`<div class="stat-item"><b>${k}</b><br>✅ 찬성: ${stats[k].app}건 (${stats[k].appS.toLocaleString()}원) <br>❌ 반대: ${stats[k].rej}건 (${stats[k].rejS.toLocaleString()}원)</div>`).join("")}</div><button onclick="closeModalStat()">닫기</button></div>`;
+}
+function closeModalStat() { document.getElementById("statModal").style.display="none"; }
+
+/* 2. 캘린더 화면 미출력 해결을 위해 기존 달력 로직 원형 보존 삽입 */
+function renderCalendarView(container) {
+    const currentYear = currentCalDate.getFullYear(); const currentMonth = currentCalDate.getMonth();
+    container.innerHTML = `<div class="cal-wrapper"><div class="cal-header"><button class="gray small" onclick="changeMonth(-1)">◀</button><b style="font-size:20px;">${currentYear}년 ${currentMonth + 1}월</b><button class="gray small" onclick="changeMonth(1)">▶</button></div><div class="cal-container" id="calContainer"><div class="cal-month-view" id="prevMonthView"></div><div class="cal-month-view" id="currMonthView"></div><div class="cal-month-view" id="nextMonthView"></div></div><div class="cal-footer"><button class="gray" onclick="navigate({page:'list'})">게시판 돌아가기</button></div></div>`;
+    renderMonthGrid(new Date(currentYear, currentMonth - 1, 1), document.getElementById('prevMonthView'));
+    renderMonthGrid(new Date(currentYear, currentMonth, 1), document.getElementById('currMonthView'));
+    renderMonthGrid(new Date(currentYear, currentMonth + 1, 1), document.getElementById('nextMonthView'));
+    document.getElementById('calContainer').style.transform = 'translateX(-33.333%)';
+}
+function renderMonthGrid(dateObj, targetElement) {
+    const year = dateObj.getFullYear(); const month = dateObj.getMonth(); const firstDay = new Date(year, month, 1).getDay(); const lastDate = new Date(year, month + 1, 0).getDate(); const prevLastDate = new Date(year, month, 0).getDate();
+    let html = `<div class="cal-grid"><div class="cal-day-label sun">일</div><div class="cal-day-label">월</div><div class="cal-day-label">화</div><div class="cal-day-label">수</div><div class="cal-day-label">목</div><div class="cal-day-label">금</div><div class="cal-day-label sat">토</div>`;
+    for(let i = firstDay - 1; i >= 0; i--) { html += renderDayCell(year, month - 1, prevLastDate - i, true); }
+    for(let d = 1; d <= lastDate; d++) { html += renderDayCell(year, month, d, false); }
+    const nextCells = 42 - (firstDay + lastDate);
+    for(let d = 1; d <= nextCells; d++) { html += renderDayCell(year, month + 1, d, true); }
+    html += `</div>`; targetElement.innerHTML = html;
+}
+function renderDayCell(y, m, d, isOther) {
+    const date = new Date(y, m, d); const dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    const dayOfWeek = date.getDay(); let cls = isOther ? 'other' : ''; if(new Date().toDateString() === date.toDateString()) cls += ' today';
+    if(dayOfWeek === 0) cls += ' sun'; if(dayOfWeek === 6) cls += ' sat';
+    return `<div class="cal-day ${cls}" onclick="navigate({page:'calDetail', date:'${dateKey}'})"><div class="cal-day-num-box"><b>${d}</b></div><div class="cal-event-container"></div></div>`;
+}
+function renderCalendarDetail(container) { container.innerHTML = `<div class="card"><h2>${route.date} 일정</h2><p>준비 중...</p><button class="gray" onclick="navigate({page:'calendar'})">뒤로가기</button></div>`; }
+function changeMonth(diff) { currentCalDate.setMonth(currentCalDate.getMonth() + diff); render(); }
 
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } };
 </script>
