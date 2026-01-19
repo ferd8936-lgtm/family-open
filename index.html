@@ -49,7 +49,7 @@ textarea.purpose-box, textarea.plan-box { height: 100px !important; min-height: 
 .btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 18px !important;}
 .btn-cal { margin-left: auto !important; background: #4b5563; }
 
-/* 1. 환경설정 아이콘 버튼 스타일 삽입 */
+/* 1. 환경설정 아이콘 버튼 스타일 */
 .btn-config { background: #94a3b8 !important; width: 42px !important; padding: 8px 0 !important; font-size: 18px; margin: 0 !important; border-radius: 8px; color: #fff; cursor: pointer; border: none; }
 
 .top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;}
@@ -113,7 +113,7 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 <div id="statModal" class="modal"></div>
 
 <script>
-/* [교체] 복사하신 새 프로젝트의 firebaseConfig 반영 */
+/* 새 프로젝트 정보 반영 */
 const firebaseConfig = {
   apiKey: "AIzaSyAjCKEt2UNVfLZx2V5oHuTpYO92MQSXXhU",
   authDomain: "family-multi-space.firebaseapp.com",
@@ -126,7 +126,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* URL 파라미터에서 f 값 추출 (없으면 default 사용) */
+/* 테넌트 식별 및 경로 설정 */
 const urlParams = new URLSearchParams(window.location.search);
 const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
@@ -145,7 +145,7 @@ const holidays = {
     "01-01": { name: "신정", red: true }, "03-01": { name: "삼일절", red: true }, "05-01": { name: "근로자의날", red: false }, "05-05": { name: "어린이날", red: true }, "05-08": { name: "어버이날", red: false }, "06-06": { name: "현충일", red: true }, "08-15": { name: "광복절", red: true }, "10-01": { name: "국군의날", red: false }, "10-03": { name: "개천절", red: true }, "10-09": { name: "한글날", red: true }, "12-25": { name: "성탄절", red: true }
 };
 
-// 파이버베이스에서 테넌트별 설정 실시간 로드
+/* 설정 데이터 수신 및 헤더 반영 */
 db.ref(`${tenantPath}/config`).on("value", (snap) => {
     if(snap.exists()) {
         config = snap.val();
@@ -155,14 +155,14 @@ db.ref(`${tenantPath}/config`).on("value", (snap) => {
     }
 });
 
-// 테넌트별 게시글 데이터 로드
+/* 게시글 데이터 로드 */
 db.ref(`${tenantPath}/approvals`).on("value", (snapshot) => {
   const val = snapshot.val();
   allData = val ? Object.keys(val).map(k => ({...val[k], dbId: k})) : [];
   if(isAuthorized && (route.page === "list" || route.page === "view")) render();
 });
 
-// 테넌트별 캘린더 데이터 로드
+/* 캘린더 데이터 로드 */
 db.ref(`${tenantPath}/calendar_v3`).on("value", (snapshot) => {
   calendarData = snapshot.val() || {};
   if(isAuthorized && (route.page === 'calendar' || route.page === 'calDetail')) render();
@@ -183,11 +183,7 @@ function verifyEntryPw() {
 }
 
 function goHome() { navigate({page:'list'}); }
-function navigate(p, push=true){ 
-    route = p; 
-    if(push) history.pushState(p, "");
-    render(); 
-}
+function navigate(p, push=true){ route = p; if(push) history.pushState(p, ""); render(); }
 
 function render(){
   if(!isAuthorized) return;
