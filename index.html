@@ -130,13 +130,13 @@ const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
 
 /* [끼워넣기] DB에서 불러올 공간별 설정 로직 (기본값 1111) */
-let config = { entryPw: "1111", masterPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!" };
+let config = { entryPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!", members: [{name:"아빠", icon:"👨", pw:"1111"}, {name:"엄마", icon:"👩", pw:"1111"}, {name:"딸", icon:"👧", pw:"1111"}] };
 let route = { page: "list", id: null, date: null };
 let keyword = "";
 let allData = [];
 let calendarData = {};
 let currentCalDate = new Date();
-let tempParentInput = { momC: "", dadC: "" };
+let tempParentInput = {};
 let editingCalId = null;
 let isAuthorized = localStorage.getItem(`auth_${tenantId}`) === "true"; 
 
@@ -234,7 +234,7 @@ function render(){
               const isNew = !readList.includes(r.id) && status === '대기';
               return `<tr class="approval-row" onclick="navigate({page:'view', id:'${r.id}'})">
                   <td>${displayData.length - i}</td>
-                  <td class="title"><div>${isNew ? '<span class="new-badge">NEW</span>' : ''}${esc(r.title)}</div><small style="color:#888;">${r.time}</small></td>
+                  <td class="title"><div>${isNew ? '<span class="new-badge">NEW</span>' : ''}${((config.members||[]).find(m=>m.name===(r.author||'딸'))||{icon:'👧'}).icon} ${esc(r.title)}</div><small style="color:#888;">${r.author||'딸'} / ${r.time}</small></td>
                   <td>${badge(status)}</td>
                 </tr>`;
             }).join("")}
@@ -243,22 +243,35 @@ function render(){
       </div>`;
   } 
   else if(route.page === "config"){
-      /* [끼워넣기] SaaS 환경설정 페이지 삽입 */
-      app.innerHTML = `
-        <div class="card">
-            <h3>환경설정 (${tenantId})</h3>
-            <label>접속 비밀번호 (최초 접속용)</label>
-            <input id="setEntryPw" type="text" value="${config.entryPw}">
-            <label>부모 비밀번호 (승인 및 설정용)</label>
-            <input id="setMasterPw" type="text" value="${config.masterPw}">
-            <div class="btn-row">
-                <button onclick="saveConfig()">저장하기</button>
-                <button class="gray" onclick="navigate({page:'list'})">취소</button>
-            </div>
-        </div>`;
-  }
+          /* [끼워넣기] SaaS 환경설정 페이지 삽입 */
+          app.innerHTML = `
+            <div class="card">
+                <h3>환경설정 (${tenantId})</h3>
+                <label>접속 비밀번호 (최초 접속용)</label>
+                <input id="setEntryPw" type="text" value="${config.entryPw}">
+                <label style="margin-top:20px;">구성원 관리 (이름, 이모지, 비밀번호)</label>
+                <div id="memberConfigArea" style="margin-top:10px;">
+                    ${(config.members || []).map((m, idx) => `
+                        <div style="display:flex; gap:5px; margin-bottom:5px;">
+                            <input type="text" id="memName_${idx}" value="${m.name}" placeholder="이름" style="flex:2; margin-top:0;">
+                            <input type="text" id="memIcon_${idx}" value="${m.icon}" placeholder="이모지" style="flex:1; margin-top:0;">
+                            <input type="text" id="memPw_${idx}" value="${m.pw}" placeholder="비밀번호" style="flex:2; margin-top:0;">
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="small gray" style="margin-top:10px;" onclick="addMemberInput()">+ 구성원 추가</button>
+                <div class="btn-row" style="margin-top:20px;">
+                    <button onclick="saveConfig()">저장하기</button>
+                    <button class="gray" onclick="navigate({page:'list'})">취소</button>
+                </div>
+            </div>`;
+      }
   else if(route.page === "new"){
     app.innerHTML = `<div class="card">
+      <label>누가 올리나요?</label>
+      <select id="authorSelect" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--line); margin-top:6px; font-size:16px; font-family:inherit;">
+        ${(config.members || []).map(m => `<option value="${m.name}">${m.icon} ${m.name}</option>`).join('')}
+      </select>
       <label>제목</label><input id="t" placeholder="무엇을 사거나 하고 싶나요?">
       <label>의견</label><textarea id="p" class="purpose-box" placeholder="왜 필요한가요?"></textarea>
       <label>계획</label><textarea id="pl" class="plan-box" placeholder="계획을 자세하게 적어주세요"></textarea>
@@ -279,12 +292,12 @@ function render(){
         <label>계획</label><textarea id="view-plan" class="plan-box" disabled>${esc(r.plan)}</textarea>
         <label>비용(원)</label><input id="view-cost" disabled type="text" value="${formatComma(r.cost)}">
       </div>
-      <div id="parentViewLog" class="parent-result"><div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;"><b>부모 의견 기록</b></div>
-        ${renderLog('엄마', r.mom, r.momC, r.momTime)}${renderLog('아빠', r.dad, r.dadC, r.dadTime)}
+      <div id="parentViewLog" class="parent-result"><div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;"><b>의견 기록</b></div>
+        ${(config.members||[]).filter(m => m.name !== (r.author||'딸')).map(m => renderLog(m.name, r[m.name], r[m.name+'C'], r[m.name+'Time'])).join('')}
       </div>
       <div id="parentArea"></div>
       <div id="parentBtnWrapper" style="text-align:center; margin-bottom:10px; display: ${showParentBtn};">
-        <button class="btn-parent-input" onclick="openParent('${r.id}')">부모 의견 입력</button>
+        <button class="btn-parent-input" onclick="openParent('${r.id}')">승인/반대 입력</button>
       </div>
       <div class="btn-row"><button class="gray" onclick="navigate({page:'list'})">목록</button><button class="red" onclick="askDelete('${r.dbId}')">삭제</button></div>`;
   }
@@ -295,14 +308,30 @@ function render(){
 /* [끼워넣기] 부모 인증 및 설정 저장 함수 삽입 */
 function openConfigAuth() {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
-    m.innerHTML = `<div class="card" style="text-align:center;"><b>부모 인증</b><p style="font-size:14px; margin-top:8px;">부모 비밀번호를 입력하세요.</p><input id="confPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
+    m.innerHTML = `<div class="card" style="text-align:center;"><b>환경설정 접근</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="confWho" style="width:100%; padding:10px; margin-bottom:10px;">${(config.members||[]).map(m=>`<option value="${m.name}">${m.name}</option>`).join('')}</select><input id="confPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
 }
 function verifyConfigAuth() {
-    if(document.getElementById("confPw").value === String(config.masterPw)) { closeModal(); navigate({page:'config'}); }
+    const who = document.getElementById("confWho").value;
+    const pw = document.getElementById("confPw").value;
+    const member = (config.members||[]).find(m => m.name === who);
+    if(member && pw === String(member.pw)) { closeModal(); navigate({page:'config'}); }
     else alert("비밀번호가 일치하지 않습니다.");
 }
 function saveConfig() {
-    db.ref(`${tenantPath}/config`).update({ entryPw: document.getElementById("setEntryPw").value, masterPw: document.getElementById("setMasterPw").value }).then(() => { alert("저장되었습니다."); navigate({page:'list'}); });
+    const newMembers = [];
+    const rows = document.getElementById("memberConfigArea").children;
+    for(let i=0; i<rows.length; i++){
+        const inputs = rows[i].querySelectorAll("input");
+        if(inputs[0].value.trim()) newMembers.push({name: inputs[0].value.trim(), icon: inputs[1].value.trim() || "👤", pw: inputs[2].value.trim() || "1111"});
+    }
+    db.ref(`${tenantPath}/config`).update({ entryPw: document.getElementById("setEntryPw").value, members: newMembers }).then(() => { alert("저장되었습니다."); navigate({page:'list'}); });
+}
+function addMemberInput() {
+    const area = document.getElementById("memberConfigArea");
+    const idx = area.children.length;
+    const div = document.createElement("div"); div.style.cssText = "display:flex; gap:5px; margin-bottom:5px;";
+    div.innerHTML = `<input type="text" id="memName_${idx}" placeholder="이름" style="flex:2; margin-top:0;"><input type="text" id="memIcon_${idx}" placeholder="이모지" style="flex:1; margin-top:0;"><input type="text" id="memPw_${idx}" placeholder="비밀번호" style="flex:2; margin-top:0;">`;
+    area.appendChild(div);
 }
 
 /* 원본 자바스크립트 함수들 (줄 수를 줄이지 않고 한 줄씩 그대로 복구) */
@@ -322,11 +351,13 @@ function confirmSubmit() {
 }
 
 function submit(){
+  const author = document.getElementById("authorSelect").value;
   const t = document.getElementById("t").value.trim();
   const rawC = document.getElementById("c").value.replace(/,/g, '').trim();
   const p = document.getElementById("p").value.trim();
   const pl = document.getElementById("pl").value.trim();
-  const newPost = { id: Date.now().toString(), title:t, purpose:p, plan:pl, cost:rawC, time:now(), mom: "pending", dad: "pending", momC: "", dadC: "", momTime: "", dadTime: "" };
+  const newPost = { id: Date.now().toString(), title:t, purpose:p, plan:pl, cost:rawC, time:now(), author: author };
+  (config.members||[]).forEach(m => { if(m.name !== author) { newPost[m.name] = "pending"; newPost[m.name+"C"] = ""; newPost[m.name+"Time"] = ""; } });
   db.ref(`${tenantPath}/approvals`).push(newPost).then(() => {
     const msg = `[똑똑! 가족게시판]\n아이의 의견이 등록되었습니다!`;
     const m = document.getElementById("pwModal");
@@ -397,7 +428,7 @@ function renderCalendarDetail(container) {
     const titleText = editingCalId ? `${dateKey} 일정 수정` : `${dateKey} 일정 추가`;
     const btnText = editingCalId ? "수정하기" : "추가하기";
     container.innerHTML = `<div class="card"><h2 style="margin-top:0; font-size: 1.2rem;">${titleText}</h2><label>제목</label><input id="calTitle" placeholder="일정 제목을 입력하세요" value="${esc(editTitle)}" ${isEditingRepeated ? 'disabled' : ''}>
-    <div style="display:flex; gap:10px;"><div style="flex:1;"><label>시작일</label><input type="date" id="calStartDate" value="${editStartDate}" ${isEditingRepeated ? 'disabled' : ''}></div><div style="flex:1;"><label>종료일</label><input type="date" id="calEndDate" value="${editEndDate}" ${isEditingRepeated ? 'disabled' : ''}></div></div>
+    <div style="display:flex; gap:10px;"><div style="flex:1;"><label>시작일</label><input type="date" id="calStartDate" value="${editStartDate}" ${isEditingRepeated ? 'disabled' : ''} onchange="document.getElementById('calEndDate').value = this.value;"></div><div style="flex:1;"><label>종료일</label><input type="date" id="calEndDate" value="${editEndDate}" ${isEditingRepeated ? 'disabled' : ''}></div></div>
     <div style="display:flex; align-items:center; gap:15px; margin-top:10px;"><div id="timeInputWrapper" style="flex:1; display: ${isAllDay ? 'none' : 'block'};"><label style="margin-top:0;">시간</label><input id="calTime" type="time" style="margin-top:4px;" value="${editTime}" ${isEditingRepeated ? 'disabled' : ''}></div><div class="flex-align-center" style="margin-top:18px;"><input type="checkbox" id="calAllDay" ${isAllDay ? 'checked' : ''} onchange="toggleTimeInput(this.checked)" ${isEditingRepeated ? 'disabled' : ''}><label for="calAllDay">하루종일</label></div></div>
     <label>내용</label><textarea id="calContent" rows="3" placeholder="상세 내용을 입력하세요" ${isEditingRepeated ? 'disabled' : ''}>${esc(editContent)}</textarea><div class="flex-align-center"><input type="checkbox" id="calRepeat" ${isRepeated ? 'checked' : ''} ${editingCalId ? 'disabled' : ''}><label for="calRepeat">매월 같은 날에 일정 반영</label></div>${isEditingRepeated ? '<p style="color:red; font-size:12px; margin-top:5px;">※ 매월 반복 일정은 수정이 제한됩니다.<br>일정 삭제 후 다시 반영해주세요.</p>' : `<button onclick="saveCal('${dateKey}')">${btnText}</button>`}<hr style="margin:20px 0; border:0; border-top:1px solid var(--line);"><b style="display:block; margin-bottom:10px;">저장된 일정 (${events.length})</b>${events.map(([id, ev]) => {
         const isMulti = ev.endDate && ev.endDate !== ev.startDate;
@@ -478,7 +509,7 @@ function changeMonth(diff) { currentCalDate.setMonth(currentCalDate.getMonth() +
 function now(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function formatComma(v){ return String(v).replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function esc(s){ return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
-function getStatus(r){ const mom = r.mom || "pending"; const dad = r.dad || "pending"; if(mom === "pending" || dad === "pending") return "대기"; return (mom === "approve" && dad === "approve") ? "찬성" : "반대"; }
+function getStatus(r){ if(!config.members) return "대기"; const author = r.author || "딸"; const approvers = config.members.filter(m => m.name !== author); if(approvers.length === 0) return "대기"; let isPending = false; let approvedCount = 0; approvers.forEach(a => { const s = r[a.name] || "pending"; if(s === "pending") isPending = true; if(s === "approve") approvedCount++; }); if(isPending) return "대기"; return (approvers.length === approvedCount) ? "찬성" : "반대"; }
 function badge(s){ return `<span class="badge ${s==='찬성'?'ok':(s==='반대'?'no':'wait')}">${s}</span>`; }
 function transKo(v){ return v === "approve" ? "찬성" : (v === "reject" ? "반대" : "대기"); }
 function renderLog(name, res, comm, time) {
@@ -504,43 +535,45 @@ function toggleEdit(dbId) {
 
 function askDelete(dbId){
   const m = document.getElementById("pwModal"); m.style.display="flex";
-  m.innerHTML=`<div class="card" style="text-align:center;"><b>기록 삭제</b><input id="delPw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authDelete('${dbId}')">확인</button><button class="fit gray" onclick="document.getElementById('pwModal').style.display='none'">닫기</button></div></div>`;
+  m.innerHTML=`<div class="card" style="text-align:center;"><b>기록 삭제</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="delWho" style="width:100%; padding:10px; margin-bottom:10px;">${(config.members||[]).map(m=>`<option value="${m.name}">${m.name}</option>`).join('')}</select><input id="delPw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authDelete('${dbId}')">확인</button><button class="fit gray" onclick="document.getElementById('pwModal').style.display='none'">닫기</button></div></div>`;
 }
-function authDelete(dbId){ if(document.getElementById("delPw").value === String(config.masterPw)){ db.ref(`${tenantPath}/approvals/`+dbId).remove().then(() => { navigate({page:'list'}); closeModal(); }); } else { alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요."); } }
+function authDelete(dbId){ const who = document.getElementById("delWho").value; const pw = document.getElementById("delPw").value; const member = (config.members||[]).find(m => m.name === who); if(member && pw === String(member.pw)){ db.ref(`${tenantPath}/approvals/`+dbId).remove().then(() => { navigate({page:'list'}); closeModal(); }); } else { alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요."); } }
 
 function openParent(id){
+  const r = allData.find(x=>String(x.id)===String(id));
+  const author = r.author || '딸';
+  const approvers = (config.members||[]).filter(m => m.name !== author);
   const m = document.getElementById("pwModal"); m.style.display="flex";
-  m.innerHTML=`<div class="card" style="text-align:center;"><b>부모 인증</b><input id="pw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="document.getElementById('pwModal').style.display='none'">닫기</button></div></div>`;
+  m.innerHTML=`<div class="card" style="text-align:center;"><b>승인자 인증</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="apprWho" style="width:100%; padding:10px; margin-bottom:10px;">${approvers.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}</select><input id="pw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="closeModal()">닫기</button></div></div>`;
 }
 
 function authParent(id){
-  if(document.getElementById("pw").value!==String(config.masterPw)) return alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요.");
+  const who = document.getElementById("apprWho").value;
+  const pw = document.getElementById("pw").value;
+  const member = (config.members||[]).find(m => m.name === who);
+  if(!member || pw !== String(member.pw)) return alert("비밀번호가 일치하지 않습니다.");
   closeModal();
   const r = allData.find(x=>String(x.id)===String(id)); 
   const logArea = document.getElementById("parentViewLog");
   if(logArea) logArea.style.display = "none";
-  let h = "";
-  ['mom', 'dad'].forEach(who => {
-      const whoKo = who === 'mom' ? '엄마' : '아빠';
-      const res = r[who];
-      const isEdit = res && res !== 'pending';
-      const icon = res === 'approve' ? '✅ 찬성' : (res === 'reject' ? '❌ 반대' : '⏳ 대기');
-      
-      const currentInput = document.getElementById(who+"C") ? document.getElementById(who+"C").value : null;
-      const val = currentInput !== null ? currentInput : (r[who+'C'] || tempParentInput[who+'C']);
-      
-      h += `<div class="card">
+  
+  const res = r[who] || 'pending';
+  const isEdit = res && res !== 'pending';
+  const icon = res === 'approve' ? '✅ 찬성' : (res === 'reject' ? '❌ 반대' : '⏳ 대기');
+  const currentInput = document.getElementById(who+"C") ? document.getElementById(who+"C").value : null;
+  const val = currentInput !== null ? currentInput : (r[who+'C'] || tempParentInput[who+'C']);
+  
+  const h = `<div class="card">
               <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:16px;">
-                <b style="font-size:16px;">${whoKo} 의견</b>
+                <b style="font-size:16px;">${who} 의견</b>
                 <span style="color:#666; font-size:16px;">${icon} ${r[who+'Time'] ? '('+r[who+'Time']+')' : ''}</span>
               </div>
-              <textarea id="${who}C" rows="3" oninput="tempParentInput.${who}C=this.value">${val || ''}</textarea>
+              <textarea id="${who}C" rows="3" oninput="tempParentInput['${who}C']=this.value">${val || ''}</textarea>
               <div style="text-align:left; margin-top:10px;">
                 <button class="fit green" onclick="confirmDecide('${r.dbId}','${who}','approve', ${isEdit})">찬성</button>
                 <button class="fit red" onclick="confirmDecide('${r.dbId}','${who}','reject', ${isEdit})">반대</button>
               </div>
             </div>`;
-  });
   document.getElementById("parentArea").innerHTML = h;
   document.getElementById("parentBtnWrapper").style.display = "none";
 }
@@ -554,10 +587,9 @@ function confirmDecide(dbId, who, val, isEdit = false) {
 
 function decide(dbId, who, val, isEdit = false){
     const comment = document.getElementById(who+"C").value;
-    if(who === 'mom') tempParentInput.momC = ""; else tempParentInput.dadC = "";
+    tempParentInput[who+"C"] = "";
     db.ref(`${tenantPath}/approvals/`+dbId).update({ [who]: val, [who+"C"]: comment, [who+"Time"]: now() }).then(() => {
-        const whoKo = (who === 'mom' ? '엄마' : '아빠');
-        const msg = isEdit ? `[똑똑! 가족 게시판]\n${whoKo}의 의견이 수정되었습니다!` : `[똑똑! 가족 게시판]\n${whoKo}의 의견이 등록되었습니다!`;
+        const msg = isEdit ? `[똑똑! 가족 게시판]\n${who}의 의견이 수정되었습니다!` : `[똑똑! 가족 게시판]\n${who}의 의견이 등록되었습니다!`;
         const m = document.getElementById("pwModal"); m.style.display = "flex";
         m.innerHTML = `<div class="card" style="text-align:center;"><b style="font-size:18px; display:block; margin-bottom:10px;">✅ 처리 완료</b><p style="color:#666; margin-bottom:20px;">가족들에게 문자로 알릴까요?</p><div class="btn-row"><a class="sms-btn" href="${getSmsUrl(msg)}" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">문자 보내기</a><button class="gray" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">그냥 닫기</button></div></div>`;
     });
@@ -565,9 +597,9 @@ function decide(dbId, who, val, isEdit = false){
 
 function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
 function openStats(){
-  const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const key = item.time.substring(0,7).replace("-","년 ") + "월"; if(!stats[key]) stats[key] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[key].app++; stats[key].appS+=c; } else { stats[key].rej++; stats[key].rejS+=c; } });
+  const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const author = item.author || "딸"; const key = item.time.substring(0,7).replace("-","년 ") + "월 [" + author + "]"; if(!stats[key]) stats[key] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[key].app++; stats[key].appS+=c; } else { stats[key].rej++; stats[key].rejS+=c; } });
   const sorted = Object.keys(stats).sort().reverse(), m = document.getElementById("statModal"); m.style.display="flex";
-  m.innerHTML = `<div class="card"><h3>월간 통계</h3><div class="table-wrapper">${sorted.map(k=>`<div class="stat-item"><b>${k}</b><br>✅ 찬성: ${stats[k].app}건 (${stats[k].appS.toLocaleString()}원) <br>❌ 반대: ${stats[k].rej}건 (${stats[k].rejS.toLocaleString()}원)</div>`).join("")}</div><button onclick="closeModalStat()">닫기</button></div>`;
+  m.innerHTML = `<div class="card"><h3>구성원별 월간 통계</h3><div class="table-wrapper">${sorted.map(k=>`<div class="stat-item"><b>${k}</b><br>✅ 찬성: ${stats[k].app}건 (${stats[k].appS.toLocaleString()}원) <br>❌ 반대: ${stats[k].rej}건 (${stats[k].rejS.toLocaleString()}원)</div>`).join("")}</div><button onclick="closeModalStat()">닫기</button></div>`;
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } else { window.history.back(); } };
@@ -575,3 +607,4 @@ history.replaceState({page:'list'}, "");
 </script>
 </body>
 </html>
+
