@@ -293,7 +293,7 @@ function render(){
         <label>비용(원)</label><input id="view-cost" disabled type="text" value="${formatComma(r.cost)}">
       </div>
       <div id="parentViewLog" class="parent-result"><div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;"><b>의견 기록</b></div>
-        ${(config.members||[]).filter(m => m.name !== (r.author||'딸')).map(m => renderLog(m.name, r[m.name], r[m.name+'C'], r[m.name+'Time'])).join('')}
+        ${(config.members||[]).filter(m => m.name !== (r.author||'딸')).map(m => { const legacyRes = m.name === '엄마' ? r.mom : (m.name === '아빠' ? r.dad : null); const legacyC = m.name === '엄마' ? r.momC : (m.name === '아빠' ? r.dadC : null); const legacyTime = m.name === '엄마' ? r.momTime : (m.name === '아빠' ? r.dadTime : null); return renderLog(m.name, r[m.name] || legacyRes, r[m.name+'C'] || legacyC, r[m.name+'Time'] || legacyTime); }).join('')}
       </div>
       <div id="parentArea"></div>
       <div id="parentBtnWrapper" style="text-align:center; margin-bottom:10px; display: ${showParentBtn};">
@@ -308,13 +308,10 @@ function render(){
 /* [끼워넣기] 부모 인증 및 설정 저장 함수 삽입 */
 function openConfigAuth() {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
-    m.innerHTML = `<div class="card" style="text-align:center;"><b>환경설정 접근</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="confWho" style="width:100%; padding:10px; margin-bottom:10px;">${(config.members||[]).map(m=>`<option value="${m.name}">${m.name}</option>`).join('')}</select><input id="confPw" type="password" style="text-align:center;"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
+    m.innerHTML = `<div class="card" style="text-align:center;"><b>접속 비밀번호 확인</b><p style="font-size:14px; margin-top:8px;">가족 게시판의 접속 비밀번호를 입력하세요.</p><input id="confPw" type="password" style="text-align:center;" placeholder="비밀번호 입력"><div class="btn-row"><button onclick="verifyConfigAuth()">확인</button><button class="gray" onclick="closeModal()">취소</button></div></div>`;
 }
 function verifyConfigAuth() {
-    const who = document.getElementById("confWho").value;
-    const pw = document.getElementById("confPw").value;
-    const member = (config.members||[]).find(m => m.name === who);
-    if(member && pw === String(member.pw)) { closeModal(); navigate({page:'config'}); }
+    if(document.getElementById("confPw").value === String(config.entryPw)) { closeModal(); navigate({page:'config'}); }
     else alert("비밀번호가 일치하지 않습니다.");
 }
 function saveConfig() {
@@ -509,7 +506,7 @@ function changeMonth(diff) { currentCalDate.setMonth(currentCalDate.getMonth() +
 function now(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function formatComma(v){ return String(v).replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function esc(s){ return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
-function getStatus(r){ if(!config.members) return "대기"; const author = r.author || "딸"; const approvers = config.members.filter(m => m.name !== author); if(approvers.length === 0) return "대기"; let isPending = false; let approvedCount = 0; approvers.forEach(a => { const s = r[a.name] || "pending"; if(s === "pending") isPending = true; if(s === "approve") approvedCount++; }); if(isPending) return "대기"; return (approvers.length === approvedCount) ? "찬성" : "반대"; }
+function getStatus(r){ if(!config.members) return "대기"; const author = r.author || "딸"; const approvers = config.members.filter(m => m.name !== author); if(approvers.length === 0) return "대기"; let isPending = false; let approvedCount = 0; approvers.forEach(a => { let s = r[a.name]; if(!s) { if(a.name === '엄마') s = r.mom; else if(a.name === '아빠') s = r.dad; } s = s || "pending"; if(s === "pending") isPending = true; if(s === "approve") approvedCount++; }); if(isPending) return "대기"; return (approvers.length === approvedCount) ? "찬성" : "반대"; }
 function badge(s){ return `<span class="badge ${s==='찬성'?'ok':(s==='반대'?'no':'wait')}">${s}</span>`; }
 function transKo(v){ return v === "approve" ? "찬성" : (v === "reject" ? "반대" : "대기"); }
 function renderLog(name, res, comm, time) {
