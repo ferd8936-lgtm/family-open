@@ -244,12 +244,12 @@ function render(){
       </div>`;
   } 
   else if(route.page === "config"){
-          /* [끼워넣기] SaaS 환경설정 페이지 삽입 */
-          app.innerHTML = `
-            <div class="card">
-                <h3>환경설정 (${tenantId})</h3>
-                <label>접속 비밀번호 (최초 접속용)</label>
-                <input id="setEntryPw" type="text" value="${config.entryPw}">
+          /* [끼워넣기] SaaS 환경설정 페이지 삽입 */
+          app.innerHTML = `
+            <div class="card">
+                <h3>환경설정 (${tenantId})</h3>
+                <label>접속 비밀번호 (공통)</label>
+                <input id="setEntryPw" type="text" value="${config.entryPw}">
                 <label style="margin-top:20px;">구성원 관리 (이름, 이모지, 비밀번호)</label>
                 <div id="memberConfigArea" style="margin-top:10px;">
                     ${(config.members || []).map((m, idx) => `
@@ -355,16 +355,16 @@ function confirmSubmit() {
 }
 
 function submit(){
-  const author = document.getElementById("authorSelect").value;
-  const t = document.getElementById("t").value.trim();
-  const rawC = document.getElementById("c").value.replace(/,/g, '').trim();
-  const p = document.getElementById("p").value.trim();
-  const pl = document.getElementById("pl").value.trim();
-  const newPost = { id: Date.now().toString(), title:t, purpose:p, plan:pl, cost:rawC, time:now(), author: author };
-  (config.members||[]).forEach(m => { if(m.name !== author) { newPost[m.name] = "pending"; newPost[m.name+"C"] = ""; newPost[m.name+"Time"] = ""; } });
-  db.ref(`${tenantPath}/approvals`).push(newPost).then(() => {
-    const msg = `[똑똑! 가족게시판]\n아이의 의견이 등록되었습니다!`;
-    const m = document.getElementById("pwModal");
+  const author = document.getElementById("authorSelect").value;
+  const t = document.getElementById("t").value.trim();
+  const rawC = document.getElementById("c").value.replace(/,/g, '').trim();
+  const p = document.getElementById("p").value.trim();
+  const pl = document.getElementById("pl").value.trim();
+  const newPost = { id: Date.now().toString(), title:t, purpose:p, plan:pl, cost:rawC, time:now(), author: author };
+  (config.members||[]).forEach(m => { if(m.name !== author) { newPost[m.name] = "pending"; newPost[m.name+"C"] = ""; newPost[m.name+"Time"] = ""; } });
+  db.ref(`${tenantPath}/approvals`).push(newPost).then(() => {
+    const msg = `[똑똑! 가족 게시판]\n${author}의 의견이 등록되었습니다!`;
+    const m = document.getElementById("pwModal");
     m.style.display = "flex";
     m.innerHTML = `<div class="card" style="text-align:center;"><b style="font-size:18px; display:block; margin-bottom:10px;">✅ 상신 완료</b><p style="color:#666; margin-bottom:20px;">가족들에게 문자를 보낼까요?</p><div class="btn-row"><a class="sms-btn" href="${getSmsUrl(msg)}" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">문자 보내기</a><button class="gray" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">그냥 닫기</button></div></div>`;
   });
@@ -524,15 +524,17 @@ function renderLog(name, res, comm, time) {
 }
 
 function toggleEdit(dbId) {
-    const btn = document.getElementById("btnEditMain");
-    if(btn.innerText !== "저장") {
-        ["view-title", "view-purpose", "view-plan", "view-cost"].forEach(id => document.getElementById(id).disabled = false);
-        btn.innerText = "저장"; btn.classList.add("green");
-    } else {
-        const updates = { title: document.getElementById("view-title").value.trim(), purpose: document.getElementById("view-purpose").value.trim(), plan: document.getElementById("view-plan").value.trim(), cost: document.getElementById("view-cost").value.replace(/,/g, '') };
-        db.ref(`${tenantPath}/approvals/`+dbId).update(updates).then(() => { 
-            const msg = `[똑똑! 가족 게시판]\n아이의 의견이 수정되었습니다!`;
-            const m = document.getElementById("pwModal");
+    const btn = document.getElementById("btnEditMain");
+    if(btn.innerText !== "저장") {
+        ["view-title", "view-purpose", "view-plan", "view-cost"].forEach(id => document.getElementById(id).disabled = false);
+        btn.innerText = "저장"; btn.classList.add("green");
+    } else {
+        const updates = { title: document.getElementById("view-title").value.trim(), purpose: document.getElementById("view-purpose").value.trim(), plan: document.getElementById("view-plan").value.trim(), cost: document.getElementById("view-cost").value.replace(/,/g, '') };
+        const r = allData.find(x => x.dbId === dbId);
+        const authorName = r ? (r.author || '딸') : '아이';
+        db.ref(`${tenantPath}/approvals/`+dbId).update(updates).then(() => { 
+            const msg = `[똑똑! 가족 게시판]\n${authorName}의 의견이 수정되었습니다!`;
+            const m = document.getElementById("pwModal");
             m.style.display = "flex";
             m.innerHTML = `<div class="card" style="text-align:center;"><b style="font-size:18px; display:block; margin-bottom:10px;">✅ 수정 완료</b><p style="color:#666; margin-bottom:20px;">수정 사실을 가족들에게 알릴까요?</p><div class="btn-row"><a class="sms-btn" href="${getSmsUrl(msg)}" onclick="document.getElementById('pwModal').style.display='none'; render();">문자 보내기</a><button class="gray" onclick="document.getElementById('pwModal').style.display='none'; render();">그냥 닫기</button></div></div>`;
         });
@@ -540,10 +542,10 @@ function toggleEdit(dbId) {
 }
 
 function askDelete(dbId){
-  const m = document.getElementById("pwModal"); m.style.display="flex";
-  m.innerHTML=`<div class="card" style="text-align:center;"><b>기록 삭제</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="delWho" style="width:100%; padding:10px; margin-bottom:10px;">${(config.members||[]).map(m=>`<option value="${m.name}">${m.name}</option>`).join('')}</select><input id="delPw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authDelete('${dbId}')">확인</button><button class="fit gray" onclick="document.getElementById('pwModal').style.display='none'">닫기</button></div></div>`;
+  const m = document.getElementById("pwModal"); m.style.display="flex";
+  m.innerHTML=`<div class="card" style="text-align:center;"><b>기록 삭제</b><p style="font-size:14px; margin-top:8px;">공통 접속 비밀번호를 입력하세요.</p><input id="delPw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authDelete('${dbId}')">확인</button><button class="fit gray" onclick="document.getElementById('pwModal').style.display='none'">닫기</button></div></div>`;
 }
-function authDelete(dbId){ const who = document.getElementById("delWho").value; const pw = document.getElementById("delPw").value; const member = (config.members||[]).find(m => m.name === who); if(member && pw === String(member.pw)){ db.ref(`${tenantPath}/approvals/`+dbId).remove().then(() => { navigate({page:'list'}); closeModal(); }); } else { alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요."); } }
+function authDelete(dbId){ const pw = document.getElementById("delPw").value; if(pw === String(config.entryPw)){ db.ref(`${tenantPath}/approvals/`+dbId).remove().then(() => { navigate({page:'list'}); closeModal(); }); } else { alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요."); } }
 
 function openParent(id){
   const r = allData.find(x=>String(x.id)===String(id));
