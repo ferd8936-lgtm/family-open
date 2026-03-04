@@ -91,8 +91,8 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .holiday-red { color: red; }
 .holiday-black { color: black; }
 .cal-event-container { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; flex: 1; }
-.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip; }
-.many-events .cal-event-item { -webkit-line-clamp: 1; }
+.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; text-overflow: clip; max-height: 26px; }
+.many-events .cal-event-item { max-height: 14px; }
 .cal-event-item.repeated { background-color: #fef9c3; }
 .cal-event-item.multi-day { background-color: #dcfce7; }
 .btn-repeat-action { background: #fff !important; color: #000 !important; border: 1px solid var(--line) !important; margin: 4px 0 !important; font-weight: 500 !important; width: 100%; }
@@ -208,10 +208,15 @@ function render(){
   header.style.display = (route.page === "calendar") ? "none" : "block";
 
   if(route.page === "list"){
-    let displayData = [...allData];
-    if(keyword) displayData = displayData.filter(x => JSON.stringify(x).includes(keyword));
-    displayData.sort((a,b) => b.time.localeCompare(a.time));
-    const readList = JSON.parse(localStorage.getItem('readApprovals') || '[]');
+    let displayData = [...allData];
+    if(keyword) {
+      displayData = displayData.filter(x => {
+        const statusKo = getStatus(x);
+        const searchStr = `${x.author} ${x.title} ${x.time} ${statusKo} ${x.purpose} ${x.plan} ${x.cost}`.toLowerCase();
+        return searchStr.includes(keyword.toLowerCase());
+      });
+    }
+    displayData.sort((a,b) => b.time.localeCompare(a.time));
 
     /* [끼워넣기] 🔒 자물쇠 아이콘 버튼 삽입 */
     app.innerHTML = `
@@ -363,7 +368,7 @@ function submit(){
   const newPost = { id: Date.now().toString(), title:t, purpose:p, plan:pl, cost:rawC, time:now(), author: author };
   (config.members||[]).forEach(m => { if(m.name !== author) { newPost[m.name] = "pending"; newPost[m.name+"C"] = ""; newPost[m.name+"Time"] = ""; } });
   db.ref(`${tenantPath}/approvals`).push(newPost).then(() => {
-    const msg = `[똑똑! 가족 게시판]\n${author}의 신규 의견이 등록되었습니다!`;
+    const msg = `[똑똑! 가족 게시판]\n${author}의 의견이 등록되었습니다!`;
     const m = document.getElementById("pwModal");
     m.style.display = "flex";
     m.innerHTML = `<div class="card" style="text-align:center;"><b style="font-size:18px; display:block; margin-bottom:10px;">✅ 상신 완료</b><p style="color:#666; margin-bottom:20px;">가족들에게 문자를 보낼까요?</p><div class="btn-row"><a class="sms-btn" href="${getSmsUrl(msg)}" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">문자 보내기</a><button class="gray" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">그냥 닫기</button></div></div>`;
@@ -519,7 +524,7 @@ function transKo(v){ return v === "approve" ? "찬성" : (v === "reject" ? "반�
 function renderLog(name, res, comm, time) {
     const member = (config.members||[]).find(m => m.name === name);
     const userIcon = member ? member.icon + ' ' : '';
-    const icon = res === 'approve' ? '✅' : (res === 'reject' ? '❌' : '⏳');
+    const icon = res === 'approve' ? '⭕' : (res === 'reject' ? '❌' : '⏳');
     return `<div style="margin-bottom:15px;"><b>${userIcon}${name}: ${icon} ${transKo(res)} ${time ? '/ '+time : ''}</b><br><div style="margin-top:8px; padding-left:10px; color:#555;">의견: ${esc(comm || "-")}</div></div>`;
 }
 
@@ -548,11 +553,11 @@ function askDelete(dbId){
 function authDelete(dbId){ const pw = document.getElementById("delPw").value; if(pw === String(config.entryPw)){ db.ref(`${tenantPath}/approvals/`+dbId).remove().then(() => { navigate({page:'list'}); closeModal(); }); } else { alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요."); } }
 
 function openParent(id){
-  const r = allData.find(x=>String(x.id)===String(id));
-  const author = r.author || '딸';
-  const approvers = (config.members||[]).filter(m => m.name !== author);
-  const m = document.getElementById("pwModal"); m.style.display="flex";
-  m.innerHTML=`<div class="card" style="text-align:center;"><b>승인자 인증</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="apprWho" style="width:100%; padding:10px; margin-bottom:10px;">${approvers.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}</select><input id="pw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="closeModal()">닫기</button></div></div>`;
+  const r = allData.find(x=>String(x.id)===String(id));
+  const author = r.author || '딸';
+  const approvers = (config.members||[]).filter(m => m.name !== author);
+  const m = document.getElementById("pwModal"); m.style.display="flex";
+  m.innerHTML=`<div class="card" style="text-align:center;"><b>승인자 인증</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="apprWho" style="width:100%; padding:10px; margin-bottom:10px; font-size: 16px;">${approvers.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}</select><input id="pw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="closeModal()">닫기</button></div></div>`;
 }
 
 function authParent(id){
@@ -566,8 +571,8 @@ function authParent(id){
   if(logArea) logArea.style.display = "none";
   
   const res = r[who] || 'pending';
-  const isEdit = res && res !== 'pending';
-  const icon = res === 'approve' ? '✅ 찬성' : (res === 'reject' ? '❌ 반대' : '⏳ 대기');
+  const isEdit = res && res !== 'pending';
+  const icon = res === 'approve' ? '⭕ 찬성' : (res === 'reject' ? '❌ 반대' : '⏳ 대기');
   const currentInput = document.getElementById(who+"C") ? document.getElementById(who+"C").value : null;
   const val = currentInput !== null ? currentInput : (r[who+'C'] || tempParentInput[who+'C']);
   
@@ -594,21 +599,61 @@ function confirmDecide(dbId, who, val, isEdit = false) {
 }
 
 function decide(dbId, who, val, isEdit = false){
-    const comment = document.getElementById(who+"C").value;
-    tempParentInput[who+"C"] = "";
-    db.ref(`${tenantPath}/approvals/`+dbId).update({ [who]: val, [who+"C"]: comment, [who+"Time"]: now() }).then(() => {
-        const decisionKo = val === 'approve' ? '찬성' : (val === 'reject' ? '반대' : '대기');
-        const msg = isEdit ? `[똑똑! 가족 게시판]\n${who}의 ${decisionKo} 의견이 수정되었습니다!` : `[똑똑! 가족 게시판]\n${who}의 ${decisionKo} 의견이 등록되었습니다!`;
-        const m = document.getElementById("pwModal");
+    const comment = document.getElementById(who+"C").value;
+    tempParentInput[who+"C"] = "";
+    db.ref(`${tenantPath}/approvals/`+dbId).update({ [who]: val, [who+"C"]: comment, [who+"Time"]: now() }).then(() => {
+        const msg = isEdit ? `[똑똑! 가족 게시판]\n${who}의 의견이 수정되었습니다!` : `[똑똑! 가족 게시판]\n${who}의 의견이 등록되었습니다!`;
+        const m = document.getElementById("pwModal"); m.style.display = "flex";
         m.innerHTML = `<div class="card" style="text-align:center;"><b style="font-size:18px; display:block; margin-bottom:10px;">✅ 처리 완료</b><p style="color:#666; margin-bottom:20px;">가족들에게 문자로 알릴까요?</p><div class="btn-row"><a class="sms-btn" href="${getSmsUrl(msg)}" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">문자 보내기</a><button class="gray" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">그냥 닫기</button></div></div>`;
     });
 }
 
 function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
 function openStats(){
-  const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const author = item.author || "딸"; const key = item.time.substring(0,7).replace("-","년 ") + "월 [" + author + "]"; if(!stats[key]) stats[key] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[key].app++; stats[key].appS+=c; } else { stats[key].rej++; stats[key].rejS+=c; } });
-  const sorted = Object.keys(stats).sort().reverse(), m = document.getElementById("statModal"); m.style.display="flex";
-  m.innerHTML = `<div class="card"><h3>구성원별 월간 통계</h3><div class="table-wrapper">${sorted.map(k=>`<div class="stat-item"><b>${k}</b><br>✅ 찬성: ${stats[k].app}건 (${stats[k].appS.toLocaleString()}원) <br>❌ 반대: ${stats[k].rej}건 (${stats[k].rejS.toLocaleString()}원)</div>`).join("")}</div><button onclick="closeModalStat()">닫기</button></div>`;
+  let yStats = {}, mStats = {}, memMonthly = {};
+  const getMemIcon = (n) => { const mb = (config.members||[]).find(m=>m.name===n); return mb ? mb.icon : '👤'; };
+  allData.filter(x => getStatus(x) !== "대기").forEach(item => {
+    const year = item.time.substring(0,4) + "년";
+    const month = item.time.substring(0,7).replace("-","년 ") + "월";
+    const author = item.author || "딸";
+    const s = getStatus(item), c = Number(item.cost);
+    const isApp = s === "찬성";
+    if(!yStats[year]) yStats[year] = {app:0, appS:0, rej:0, rejS:0};
+    if(!mStats[author]) mStats[author] = {app:0, appS:0, rej:0, rejS:0, icon: getMemIcon(author)};
+    if(!memMonthly[author]) memMonthly[author] = {};
+    if(!memMonthly[author][month]) memMonthly[author][month] = {app:0, appS:0, rej:0, rejS:0};
+    
+    if(isApp){
+      yStats[year].app++; yStats[year].appS+=c;
+      mStats[author].app++; mStats[author].appS+=c;
+      memMonthly[author][month].app++; memMonthly[author][month].appS+=c;
+    } else {
+      yStats[year].rej++; yStats[year].rejS+=c;
+      mStats[author].rej++; mStats[author].rejS+=c;
+      memMonthly[author][month].rej++; memMonthly[author][month].rejS+=c;
+    }
+  });
+
+  let html = `<div class="card" style="width:100%; max-width:600px;">`;
+  html += `<h3 style="margin-top:0;">📊 연도별 누적 집계표</h3>`;
+  Object.keys(yStats).sort().reverse().forEach(y => {
+    html += `<div class="stat-item" style="background:#f0f9ff;"><b>${y} 총계</b><br>⭕ 찬성: ${yStats[y].app}건 (${yStats[y].appS.toLocaleString()}원)<br>❌ 반대: ${yStats[y].rej}건 (${yStats[y].rejS.toLocaleString()}원)</div>`;
+  });
+
+  html += `<h3 style="margin-top:20px;">👥 구성원별 누적 집계표</h3>`;
+  Object.keys(mStats).forEach(m => {
+    html += `<div class="stat-item" style="cursor:pointer; background:#fff;" onclick="const el=document.getElementById('m-stat-${m}'); el.style.display=el.style.display==='none'?'block':'none';">`;
+    html += `<b>${mStats[m].icon} ${m} (클릭하여 월별 보기)</b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원) | ❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
+    html += `<div id="m-stat-${m}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
+    Object.keys(memMonthly[m]).sort().reverse().forEach(mo => {
+      const md = memMonthly[m][mo];
+      html += `<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; margin-bottom:6px; font-size:14px;"><b>${mo}</b><br>⭕ 찬성: ${md.app}건 (${md.appS.toLocaleString()}원) <br>❌ 반대: ${md.rej}건 (${md.rejS.toLocaleString()}원)</div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `<button style="margin-top:15px;" onclick="closeModalStat()">닫기</button></div>`;
+  
+  const mod = document.getElementById("statModal"); mod.style.display="flex"; mod.innerHTML = html;
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } else { window.history.back(); } };
