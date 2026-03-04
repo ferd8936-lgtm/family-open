@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-<title>똑똑!! 가족 게시판</title>
+<title>🏡똑똑!! 가족 게시판</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -151,7 +151,7 @@ const holidays = {
 db.ref(`${tenantPath}/config`).on("value", (snap) => {
     if(snap.exists()) {
         config = snap.val();
-        document.querySelector("header h1").innerText = config.headerTitle;
+        document.querySelector("header h1").innerText = "🏡" + config.headerTitle;
         document.getElementById("header-desc").innerText = config.headerDesc;
         if(isAuthorized) render();
     }
