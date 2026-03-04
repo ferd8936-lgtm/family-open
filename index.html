@@ -45,15 +45,15 @@ textarea.purpose-box, textarea.plan-box { height: 100px !important; min-height: 
 
 /* [끼워넣기] 상단 버튼 배치 보정 및 자물쇠 아이콘 스타일 (여백 최소화) */
 .top-actions {display:flex; gap:4px; margin-bottom:12px; justify-content: flex-start; align-items: center;}
-.btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 14px !important;}
-.btn-cal { margin-left: auto !important; background: #4b5563; }
+.btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 12px !important; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0;}
+.btn-cal { margin-left: auto !important; background: #4b5563; flex-shrink: 0; }
 
 /* 🔒 자물쇠 아이콘 버튼: 배경 제거 및 세로폭 최적화 */
-.btn-config { background: none !important; width: 32px !important; height: 35px !important; padding: 0 !important; font-size: 20px; margin: 0 !important; border: none; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-config { background: none !important; width: 32px !important; height: 35px !important; padding: 0 !important; font-size: 20px; margin: 0 !important; border: none; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
 
 .top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;}
 .top-search input {margin-top: 0; height: 38px; flex: 1;}
-.top-search button {height: 38px; margin: 0; min-width: 60px; width: 60px; padding: 0; white-space: nowrap;}
+.top-search button {height: 38px; margin: 0; min-width: 60px; width: 60px; padding: 0; white-space: nowrap; flex-shrink: 0;}
 
 .table-wrapper {max-height: 540px;overflow-y: auto;border: 1px solid var(--line);border-radius: 8px;}
 table{width:100%; border-collapse:collapse; position: relative; table-layout: fixed;}
@@ -68,7 +68,7 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .parent-result{margin-top:12px;padding:12px;border-radius:8px;background:#f9fafb;border:1px solid var(--line); line-height: 1.6; margin-bottom: 10px;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:16px;z-index: 1000;}
 .modal .card{width:min(480px,100%); max-height: 85vh; overflow-y: auto;}
-.modal .card, .modal .card p, .modal .card b, .modal .card h3 { font-size: 16px !important; }
+.modal .card, .modal .card p, .modal .card b, .modal .card h3, .modal .card select, .modal .card input { font-size: 16px !important; font-family: inherit; }
 .btn-row {display: flex; gap: 10px; margin-top: 20px; justify-content: center;}
 .btn-row button, .btn-row .sms-btn {flex: 1; margin: 0;}
 .view-time-header {font-size: 14px;color: #666;margin-bottom: 10px;text-align: right;}
@@ -91,8 +91,8 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .holiday-red { color: red; }
 .holiday-black { color: black; }
 .cal-event-container { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; flex: 1; }
-.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip; }
-.many-events .cal-event-item { -webkit-line-clamp: 1; }
+.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.2; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; max-height: 2.4em; }
+.many-events .cal-event-item { max-height: 1.2em; white-space: nowrap; text-overflow: clip; }
 .cal-event-item.repeated { background-color: #fef9c3; }
 .cal-event-item.multi-day { background-color: #dcfce7; }
 .btn-repeat-action { background: #fff !important; color: #000 !important; border: 1px solid var(--line) !important; margin: 4px 0 !important; font-weight: 500 !important; width: 100%; }
@@ -208,23 +208,34 @@ function render(){
   header.style.display = (route.page === "calendar") ? "none" : "block";
 
   if(route.page === "list"){
-    let displayData = [...allData];
-    if(keyword) displayData = displayData.filter(x => JSON.stringify(x).includes(keyword));
-    displayData.sort((a,b) => b.time.localeCompare(a.time));
-    const readList = JSON.parse(localStorage.getItem('readApprovals') || '[]');
+    let displayData = [...allData];
+    if(keyword) displayData = displayData.filter(x => JSON.stringify(x).includes(keyword) || getStatus(x).includes(keyword));
+    displayData.sort((a,b) => b.time.localeCompare(a.time));
+    const readList = JSON.parse(localStorage.getItem('readApprovals') || '[]');
 
-    /* [끼워넣기] 🔒 자물쇠 아이콘 버튼 삽입 */
-    app.innerHTML = `
-      <div class="top-actions">
-        <button class="btn-submit" onclick="navigate({page:'new'})">의견 올리기</button>
-        <button class="btn-stats" onclick="openStats()">통계</button>
-        <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
-        <button class="btn-config" onclick="openConfigAuth()">🔒</button>
-      </div>
-      <div class="top-search">
-        <button class="gray" onclick="doSearch()">검색</button>
-        <input id="q" placeholder="검색어 입력" value="${esc(keyword)}">
-      </div>
+    /* [끼워넣기] 🔒 자물쇠 아이콘 버튼 삽입 (좌우 정렬 확실하게 분리) */
+    app.innerHTML = `
+      <div class="top-actions" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:4px;">
+        <div style="display:flex; gap:4px; flex:1;">
+          <button class="btn-submit" onclick="navigate({page:'new'})">의견 올리기</button>
+          <button class="btn-stats" onclick="openStats()">통계</button>
+        </div>
+        <div style="display:flex; gap:4px; align-items:center;">
+          <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
+          <button class="btn-config" onclick="openConfigAuth()">🔒</button>
+        </div>
+      </div>
+      <div class="top-search" style="display:flex; gap:4px; align-items:center; margin-bottom:16px; width:100%;">
+        <button class="gray" onclick="doSearch()" style="margin:0; width:60px; min-width:60px; height:38px; padding:0; white-space:nowrap; flex-shrink:0;">검색</button>
+        <div style="display:flex; flex:1; align-items:center; background:#fff; border:1px solid var(--line); border-radius:8px; height:38px; overflow:hidden;">
+          <div style="padding:0 8px 0 10px; color:#555; font-size:14px; font-weight:600; white-space:nowrap; cursor:default;">전체 ▾</div>
+          <div style="width:1px; height:16px; background:var(--line); margin:0;"></div>
+          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="flex:1; border:none; margin:0; padding:0 10px; height:100%; min-width:0; background:transparent; outline:none; font-size:15px;">
+        </div>
+      </div>
+      </div>
+        <button class="gray" onclick="doSearch()" style="margin:0; width:60px; min-width:60px; height:38px; padding:0; white-space:nowrap;">검색</button>
+      </div>
       <div class="table-wrapper">
         <table>
           <colgroup><col style="width: 45px;"><col><col style="width: 75px;"></colgroup>
@@ -365,9 +376,6 @@ function submit(){
   db.ref(`${tenantPath}/approvals`).push(newPost).then(() => {
     const msg = `[똑똑! 가족 게시판]\n${author}의 신규 의견이 등록되었습니다!`;
     const m = document.getElementById("pwModal");
-    m.style.display = "flex";
-    m.innerHTML = `<div class="card" style="text-align:center;"><b style="font-size:18px; display:block; margin-bottom:10px;">✅ 상신 완료</b><p style="color:#666; margin-bottom:20px;">가족들에게 문자를 보낼까요?</p><div class="btn-row"><a class="sms-btn" href="${getSmsUrl(msg)}" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">문자 보내기</a><button class="gray" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">그냥 닫기</button></div></div>`;
-  });
     m.style.display = "flex";
     m.innerHTML = `<div class="card" style="text-align:center;"><b style="font-size:18px; display:block; margin-bottom:10px;">✅ 상신 완료</b><p style="color:#666; margin-bottom:20px;">가족들에게 문자를 보낼까요?</p><div class="btn-row"><a class="sms-btn" href="${getSmsUrl(msg)}" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">문자 보내기</a><button class="gray" onclick="document.getElementById('pwModal').style.display='none'; navigate({page:'list'});">그냥 닫기</button></div></div>`;
   });
@@ -410,7 +418,7 @@ function renderDayCell(y, m, d, isOther) {
     let events = calendarData[dateKey] ? Object.values(calendarData[dateKey]) : [];
     events.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
     const cellCls = events.length >= 4 ? 'many-events' : '';
-
+    
     const eventHtml = events.map(ev => {
         let multiCls = "";
         if(ev.endDate && ev.endDate !== ev.startDate) {
@@ -522,7 +530,7 @@ function transKo(v){ return v === "approve" ? "찬성" : (v === "reject" ? "반�
 function renderLog(name, res, comm, time) {
     const member = (config.members||[]).find(m => m.name === name);
     const userIcon = member ? member.icon + ' ' : '';
-    const icon = res === 'approve' ? '✅' : (res === 'reject' ? '❌' : '⏳');
+    const icon = res === 'approve' ? '⭕' : (res === 'reject' ? '❌' : '⏳');
     return `<div style="margin-bottom:15px;"><b>${userIcon}${name}: ${icon} ${transKo(res)} ${time ? '/ '+time : ''}</b><br><div style="margin-top:8px; padding-left:10px; color:#555;">의견: ${esc(comm || "-")}</div></div>`;
 }
 
@@ -551,11 +559,11 @@ function askDelete(dbId){
 function authDelete(dbId){ const pw = document.getElementById("delPw").value; if(pw === String(config.entryPw)){ db.ref(`${tenantPath}/approvals/`+dbId).remove().then(() => { navigate({page:'list'}); closeModal(); }); } else { alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요."); } }
 
 function openParent(id){
-  const r = allData.find(x=>String(x.id)===String(id));
-  const author = r.author || '딸';
-  const approvers = (config.members||[]).filter(m => m.name !== author);
-  const m = document.getElementById("pwModal"); m.style.display="flex";
-  m.innerHTML=`<div class="card" style="text-align:center;"><b>승인자 인증</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="apprWho" style="width:100%; padding:10px; margin-bottom:10px;">${approvers.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}</select><input id="pw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="closeModal()">닫기</button></div></div>`;
+  const r = allData.find(x=>String(x.id)===String(id));
+  const author = r.author || '딸';
+  const approvers = (config.members||[]).filter(m => m.name !== author);
+  const m = document.getElementById("pwModal"); m.style.display="flex";
+  m.innerHTML=`<div class="card" style="text-align:center;"><b>승인자 인증</b><p style="margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="apprWho" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid var(--line); font-size:16px; font-family:inherit; font-weight:bold;">${approvers.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}</select><input id="pw" type="password" placeholder="비밀번호" style="font-size:16px;"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="closeModal()">닫기</button></div></div>`;
 }
 
 function authParent(id){
@@ -567,13 +575,13 @@ function authParent(id){
   const r = allData.find(x=>String(x.id)===String(id)); 
   const logArea = document.getElementById("parentViewLog");
   if(logArea) logArea.style.display = "none";
-
+  
   const res = r[who] || 'pending';
   const isEdit = res && res !== 'pending';
   const icon = res === 'approve' ? '✅ 찬성' : (res === 'reject' ? '❌ 반대' : '⏳ 대기');
   const currentInput = document.getElementById(who+"C") ? document.getElementById(who+"C").value : null;
   const val = currentInput !== null ? currentInput : (r[who+'C'] || tempParentInput[who+'C']);
-
+  
   const h = `<div class="card">
               <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:16px;">
                 <b style="font-size:16px;">${who} 의견</b>
@@ -609,9 +617,33 @@ function decide(dbId, who, val, isEdit = false){
 
 function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
 function openStats(){
-  const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const author = item.author || "딸"; const key = item.time.substring(0,7).replace("-","년 ") + "월 [" + author + "]"; if(!stats[key]) stats[key] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[key].app++; stats[key].appS+=c; } else { stats[key].rej++; stats[key].rejS+=c; } });
-  const sorted = Object.keys(stats).sort().reverse(), m = document.getElementById("statModal"); m.style.display="flex";
-  m.innerHTML = `<div class="card"><h3>구성원별 월간 통계</h3><div class="table-wrapper">${sorted.map(k=>`<div class="stat-item"><b>${k}</b><br>✅ 찬성: ${stats[k].app}건 (${stats[k].appS.toLocaleString()}원) <br>❌ 반대: ${stats[k].rej}건 (${stats[k].rejS.toLocaleString()}원)</div>`).join("")}</div><button onclick="closeModalStat()">닫기</button></div>`;
+  const now = new Date(); const curYear = String(now.getFullYear()); const curMonthStr = curYear + "-" + String(now.getMonth()+1).padStart(2, '0');
+  let sumYear = {app:0, appS:0, rej:0, rejS:0}; let sumMonth = {app:0, appS:0, rej:0, rejS:0};
+  const stats = {};
+  allData.filter(x => getStatus(x) !== "대기").forEach(item => {
+    const s = getStatus(item), c = Number(item.cost), timeStr = item.time.substring(0,7), itemYear = item.time.substring(0,4);
+    if(itemYear === curYear) { if(s==="찬성"){ sumYear.app++; sumYear.appS+=c; } else { sumYear.rej++; sumYear.rejS+=c; } }
+    if(timeStr === curMonthStr) { if(s==="찬성"){ sumMonth.app++; sumMonth.appS+=c; } else { sumMonth.rej++; sumMonth.rejS+=c; } }
+    const author = item.author || "딸"; const month = timeStr.replace("-","년 ") + "월";
+    if(!stats[author]) stats[author] = {}; if(!stats[author][month]) stats[author][month] = {app:0, appS:0, rej:0, rejS:0};
+    if(s==="찬성"){ stats[author][month].app++; stats[author][month].appS+=c; } else { stats[author][month].rej++; stats[author][month].rejS+=c; }
+  });
+  const m = document.getElementById("statModal"); m.style.display="flex";
+  let html = `<div class="card"><h3>전체 통계 요약</h3>`;
+  html += `<div style="margin-bottom:15px; padding:12px; background:#f9fafb; border-radius:8px; border:1px solid var(--line); line-height:1.6;">`;
+  html += `<b>📊 ${curYear}년 누적</b><br><span style="font-size:14px;">⭕ 찬성: ${sumYear.app}건 (${sumYear.appS.toLocaleString()}원)<br>❌ 반대: ${sumYear.rej}건 (${sumYear.rejS.toLocaleString()}원)</span><br><br>`;
+  html += `<b>📅 이번 달 (${now.getMonth()+1}월)</b><br><span style="font-size:14px;">⭕ 찬성: ${sumMonth.app}건 (${sumMonth.appS.toLocaleString()}원)<br>❌ 반대: ${sumMonth.rej}건 (${sumMonth.rejS.toLocaleString()}원)</span></div>`;
+  html += `<h3>구성원별 상세 통계</h3><div class="table-wrapper" style="max-height: 400px;">`;
+  Object.keys(stats).sort().forEach(author => {
+    const mem = (config.members||[]).find(x => x.name === author); const icon = mem ? mem.icon : '👤';
+    html += `<div class="stat-item"><b style="font-size:16px; color:var(--brand);">${icon} ${author}</b>`;
+    Object.keys(stats[author]).sort().reverse().forEach(month => {
+      const d = stats[author][month];
+      html += `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);"><b>${month}</b><br>⭕ 찬성: ${d.app}건 (${d.appS.toLocaleString()}원) <br>❌ 반대: ${d.rej}건 (${d.rejS.toLocaleString()}원)</div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div><button style="margin-top:15px;" onclick="closeModalStat()">닫기</button></div>`; m.innerHTML = html;
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } else { window.history.back(); } };
