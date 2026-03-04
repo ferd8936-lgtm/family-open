@@ -643,11 +643,11 @@ function openStats(){
   html += `<h3 style="margin-top:0;">📊 연도별 누적 집계표</h3>`;
   Object.keys(yStats).sort().reverse().forEach(y => {
     html += `<div class="stat-item" style="cursor:pointer; background:#f0f9ff;" onclick="const el=document.getElementById('y-stat-${y}'); el.style.display=el.style.display==='none'?'block':'none';">`;
-    html += `<b>${y} 총계 </b><br>⭕ 찬성: ${yStats[y].app}건 (${yStats[y].appS.toLocaleString()}원)<br>❌ 반대: ${yStats[y].rej}건 (${yStats[y].rejS.toLocaleString()}원)`;
+    html += `<b>${y} 총계 (클릭하여 월별 보기)</b><br>⭕ 찬성: ${yStats[y].app}건 (${yStats[y].appS.toLocaleString()}원)<br>❌ 반대: ${yStats[y].rej}건 (${yStats[y].rejS.toLocaleString()}원)`;
     html += `<div id="y-stat-${y}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
     Object.keys(yMonthly[y]).sort().reverse().forEach(mo => {
       const md = yMonthly[y][mo];
-      html += `<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; margin-bottom:6px; font-size:14px;"><b>${mo}</b><br>⭕ 찬성: ${md.app}건 (${md.appS.toLocaleString()}원) <br>❌ 반대: ${md.rej}건 (${md.rejS.toLocaleString()}원)</div>`;
+      html += `<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; margin-bottom:6px;"><b>${mo}</b><br>⭕ 찬성: ${md.app}건 (${md.appS.toLocaleString()}원) <br>❌ 반대: ${md.rej}건 (${md.rejS.toLocaleString()}원)</div>`;
     });
     html += `</div></div>`;
   });
@@ -655,11 +655,11 @@ function openStats(){
   html += `<h3 style="margin-top:20px;">👥 구성원별 누적 집계표</h3>`;
   Object.keys(mStats).forEach(m => {
     html += `<div class="stat-item" style="cursor:pointer; background:#f0f9ff;" onclick="const el=document.getElementById('m-stat-${m}'); el.style.display=el.style.display==='none'?'block':'none';">`;
-    html += `<b>${mStats[m].icon} ${m} </b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원)<br>❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
+    html += `<b>${mStats[m].icon} ${m} (클릭하여 월별 보기)</b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원) | ❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
     html += `<div id="m-stat-${m}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
     Object.keys(memMonthly[m]).sort().reverse().forEach(mo => {
       const md = memMonthly[m][mo];
-      html += `<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; margin-bottom:6px; font-size:14px;"><b>${mo}</b><br>⭕ 찬성: ${md.app}건 (${md.appS.toLocaleString()}원) <br>❌ 반대: ${md.rej}건 (${md.rejS.toLocaleString()}원)</div>`;
+      html += `<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; margin-bottom:6px;"><b>${mo}</b><br>⭕ 찬성: ${md.app}건 (${md.appS.toLocaleString()}원) <br>❌ 반대: ${md.rej}건 (${md.rejS.toLocaleString()}원)</div>`;
     });
     html += `</div></div>`;
   });
@@ -673,5 +673,3 @@ history.replaceState({page:'list'}, "");
 </script>
 </body>
 </html>
-
-
