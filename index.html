@@ -217,6 +217,7 @@ function render(){
       });
     }
     displayData.sort((a,b) => b.time.localeCompare(a.time));
+    const readList = JSON.parse(localStorage.getItem('readApprovals') || '[]');
 
     /* [끼워넣기] 🔒 자물쇠 아이콘 버튼 삽입 */
     app.innerHTML = `
