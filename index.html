@@ -45,11 +45,11 @@ textarea.purpose-box, textarea.plan-box { height: 100px !important; min-height: 
 
 /* [끼워넣기] 상단 버튼 배치 보정 및 자물쇠 아이콘 스타일 (여백 최소화) */
 .top-actions {display:flex; gap:4px; margin-bottom:12px; justify-content: flex-start; align-items: center;}
-.btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 14px !important;}
+.btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 12px !important; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0;}
 .btn-cal { margin-left: auto !important; background: #4b5563; }
 
 /* 🔒 자물쇠 아이콘 버튼: 배경 제거 및 세로폭 최적화 */
-.btn-config { background: none !important; width: 32px !important; height: 35px !important; padding: 0 !important; font-size: 20px; margin: 0 !important; border: none; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-config { background: none !important; width: 32px !important; height: 35px !important; padding: 0 !important; font-size: 20px; margin: 0 !important; border: none; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
 
 .top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;}
 .top-search input {margin-top: 0; height: 38px; flex: 1;}
@@ -68,7 +68,7 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .parent-result{margin-top:12px;padding:12px;border-radius:8px;background:#f9fafb;border:1px solid var(--line); line-height: 1.6; margin-bottom: 10px;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:16px;z-index: 1000;}
 .modal .card{width:min(480px,100%); max-height: 85vh; overflow-y: auto;}
-.modal .card, .modal .card p, .modal .card b, .modal .card h3 { font-size: 16px !important; }
+.modal .card, .modal .card p, .modal .card b, .modal .card h3, .modal .card select, .modal .card input { font-size: 16px !important; font-family: inherit; }
 .btn-row {display: flex; gap: 10px; margin-top: 20px; justify-content: center;}
 .btn-row button, .btn-row .sms-btn {flex: 1; margin: 0;}
 .view-time-header {font-size: 14px;color: #666;margin-bottom: 10px;text-align: right;}
@@ -231,19 +231,19 @@ function render(){
         <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
         <button class="btn-config" onclick="openConfigAuth()">🔒</button>
       </div>
-      <div class="top-search" style="display: flex; gap: 8px; flex-wrap: nowrap; align-items: center;">
-        <div style="display:flex; flex:1; height:38px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:transparent;">
-          <select id="searchCat" style="width:auto; padding:0 4px 0 10px; border:none; background:transparent; font-size:15px; font-family:inherit; outline:none; border-right:1px solid var(--line); border-radius:0;">
-            <option value="all" ${searchCategory==='all'?'selected':''}>전체</option>
-            <option value="author" ${searchCategory==='author'?'selected':''}>의견자</option>
-            <option value="title" ${searchCategory==='title'?'selected':''}>제목</option>
-            <option value="time" ${searchCategory==='time'?'selected':''}>시간</option>
-            <option value="status" ${searchCategory==='status'?'selected':''}>상태</option>
-            <option value="content" ${searchCategory==='content'?'selected':''}>내용</option>
+      <div class="top-search" style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;">
+        <div style="display:flex; flex:1; align-items:center; border:1px solid var(--line); border-radius:8px; height:38px; background:#fff; overflow:hidden;">
+          <select id="searchCat" style="border:none; background:transparent; font-size:14px; font-family:inherit; outline:none; padding:0 4px 0 8px; color:#555; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; width:auto; max-width:80px; font-weight:600;">
+            <option value="all" ${searchCategory==='all'?'selected':''}>전체 ▾</option>
+            <option value="author" ${searchCategory==='author'?'selected':''}>의견자 ▾</option>
+            <option value="title" ${searchCategory==='title'?'selected':''}>제목 ▾</option>
+            <option value="time" ${searchCategory==='time'?'selected':''}>시간 ▾</option>
+            <option value="status" ${searchCategory==='status'?'selected':''}>상태 ▾</option>
+            <option value="content" ${searchCategory==='content'?'selected':''}>내용 ▾</option>
           </select>
-          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="border:none; margin:0; padding-left:10px; flex:1; height:100%; border-radius:0; min-width:0;">
+          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="flex:1; border:none; margin:0; padding:0 8px; height:100%; min-width:0; background:transparent; outline:none; font-size:15px; border-left:1px solid var(--line); border-radius:0;">
         </div>
-        <button class="gray" onclick="doSearch()">검색</button>
+        <button class="gray" onclick="doSearch()" style="margin:0; width:60px; min-width:60px; height:38px; padding:0; white-space:nowrap;">검색</button>
       </div>
       <div class="table-wrapper">
         <table>
