@@ -46,14 +46,14 @@ textarea.purpose-box, textarea.plan-box { height: 100px !important; min-height: 
 /* [끼워넣기] 상단 버튼 배치 보정 및 자물쇠 아이콘 스타일 (여백 최소화) */
 .top-actions {display:flex; gap:4px; margin-bottom:12px; justify-content: flex-start; align-items: center;}
 .btn-submit, .btn-stats, .btn-cal {width: auto !important; margin: 0 !important; padding: 8px 12px !important; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0;}
-.btn-cal { margin-left: auto !important; background: #4b5563; }
+.btn-cal { margin-left: auto !important; background: #4b5563; flex-shrink: 0; }
 
 /* 🔒 자물쇠 아이콘 버튼: 배경 제거 및 세로폭 최적화 */
 .btn-config { background: none !important; width: 32px !important; height: 35px !important; padding: 0 !important; font-size: 20px; margin: 0 !important; border: none; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
 
 .top-search {display: flex; gap: 8px; align-items: center; margin-bottom: 16px;}
 .top-search input {margin-top: 0; height: 38px; flex: 1;}
-.top-search button {height: 38px; margin: 0; min-width: 60px; width: 60px; padding: 0; white-space: nowrap;}
+.top-search button {height: 38px; margin: 0; min-width: 60px; width: 60px; padding: 0; white-space: nowrap; flex-shrink: 0;}
 
 .table-wrapper {max-height: 540px;overflow-y: auto;border: 1px solid var(--line);border-radius: 8px;}
 table{width:100%; border-collapse:collapse; position: relative; table-layout: fixed;}
@@ -212,11 +212,13 @@ function render(){
     let displayData = [...allData];
     if(keyword) {
       displayData = displayData.filter(x => {
-        if(searchCategory === "author") return (x.author||'딸').includes(keyword);
-        if(searchCategory === "title") return (x.title||'').includes(keyword);
-        if(searchCategory === "time") return (x.time||'').includes(keyword);
-        if(searchCategory === "status") return getStatus(x).includes(keyword);
-        if(searchCategory === "content") return (x.purpose||'').includes(keyword) || (x.plan||'').includes(keyword);
+        if(typeof searchCategory !== 'undefined') {
+          if(searchCategory === "author") return (x.author||'딸').includes(keyword);
+          if(searchCategory === "title") return (x.title||'').includes(keyword);
+          if(searchCategory === "time") return (x.time||'').includes(keyword);
+          if(searchCategory === "status") return getStatus(x).includes(keyword);
+          if(searchCategory === "content") return (x.purpose||'').includes(keyword) || (x.plan||'').includes(keyword);
+        }
         return JSON.stringify(x).includes(keyword) || getStatus(x).includes(keyword);
       });
     }
@@ -231,9 +233,10 @@ function render(){
         <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
         <button class="btn-config" onclick="openConfigAuth()">🔒</button>
       </div>
-      <div class="top-search" style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;">
-        <div style="display:flex; flex:1; align-items:center; border:1px solid var(--line); border-radius:8px; height:38px; background:#fff; overflow:hidden;">
-          <select id="searchCat" style="border:none; background:transparent; font-size:14px; font-family:inherit; outline:none; padding:0 4px 0 8px; color:#555; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; width:auto; max-width:80px; font-weight:600;">
+      <div class="top-search">
+        <button class="gray" onclick="doSearch()">검색</button>
+        <div style="display:flex; flex:1; align-items:center; background:#fff; border:1px solid var(--line); border-radius:8px; height:38px; overflow:hidden;">
+          <select id="searchCat" style="border:none; background:transparent; font-size:15px; font-family:inherit; outline:none; padding:0 4px 0 10px; color:#333; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; width:auto; font-weight:bold;">
             <option value="all" ${searchCategory==='all'?'selected':''}>전체 ▾</option>
             <option value="author" ${searchCategory==='author'?'selected':''}>의견자 ▾</option>
             <option value="title" ${searchCategory==='title'?'selected':''}>제목 ▾</option>
@@ -241,8 +244,9 @@ function render(){
             <option value="status" ${searchCategory==='status'?'selected':''}>상태 ▾</option>
             <option value="content" ${searchCategory==='content'?'selected':''}>내용 ▾</option>
           </select>
-          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="flex:1; border:none; margin:0; padding:0 8px; height:100%; min-width:0; background:transparent; outline:none; font-size:15px; border-left:1px solid var(--line); border-radius:0;">
+          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="border:none; margin:0; padding:0 10px; flex:1; height:100%; border-radius:0; min-width:0; background:transparent; outline:none;">
         </div>
+      </div>
         <button class="gray" onclick="doSearch()" style="margin:0; width:60px; min-width:60px; height:38px; padding:0; white-space:nowrap;">검색</button>
       </div>
       <div class="table-wrapper">
@@ -568,11 +572,11 @@ function askDelete(dbId){
 function authDelete(dbId){ const pw = document.getElementById("delPw").value; if(pw === String(config.entryPw)){ db.ref(`${tenantPath}/approvals/`+dbId).remove().then(() => { navigate({page:'list'}); closeModal(); }); } else { alert("비밀번호가 일치하지 않습니다. 다시 확인해주세요."); } }
 
 function openParent(id){
-  const r = allData.find(x=>String(x.id)===String(id));
-  const author = r.author || '딸';
-  const approvers = (config.members||[]).filter(m => m.name !== author);
-  const m = document.getElementById("pwModal"); m.style.display="flex";
-  m.innerHTML=`<div class="card" style="text-align:center;"><b>승인자 인증</b><p style="font-size:14px; margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="apprWho" style="width:100%; padding:10px; margin-bottom:10px;">${approvers.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}</select><input id="pw" type="password" placeholder="비밀번호"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="closeModal()">닫기</button></div></div>`;
+  const r = allData.find(x=>String(x.id)===String(id));
+  const author = r.author || '딸';
+  const approvers = (config.members||[]).filter(m => m.name !== author);
+  const m = document.getElementById("pwModal"); m.style.display="flex";
+  m.innerHTML=`<div class="card" style="text-align:center;"><b>승인자 인증</b><p style="margin-top:8px;">본인을 선택하고 비밀번호를 입력하세요.</p><select id="apprWho" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid var(--line); font-size:16px; font-family:inherit; font-weight:bold;">${approvers.map(a=>`<option value="${a.name}">${a.name}</option>`).join('')}</select><input id="pw" type="password" placeholder="비밀번호" style="font-size:16px;"><div class="btn-row"><button class="fit" onclick="authParent('${id}')">확인</button><button class="fit gray" onclick="closeModal()">닫기</button></div></div>`;
 }
 
 function authParent(id){
