@@ -91,8 +91,8 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .holiday-red { color: red; }
 .holiday-black { color: black; }
 .cal-event-container { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; flex: 1; }
-.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; white-space: nowrap; text-overflow: clip; }
-.many-events .cal-event-item { white-space: nowrap; }
+.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.2; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; max-height: 2.4em; }
+.many-events .cal-event-item { max-height: 1.2em; white-space: nowrap; text-overflow: clip; }
 .cal-event-item.repeated { background-color: #fef9c3; }
 .cal-event-item.multi-day { background-color: #dcfce7; }
 .btn-repeat-action { background: #fff !important; color: #000 !important; border: 1px solid var(--line) !important; margin: 4px 0 !important; font-weight: 500 !important; width: 100%; }
@@ -231,22 +231,20 @@ function render(){
         <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
         <button class="btn-config" onclick="openConfigAuth()">🔒</button>
       </div>
-      <div class="top-search">
-        <select id="searchCat" style="width:auto; padding:0 8px; height:38px; border-radius:8px; border:1px solid var(--line); font-size:14px; font-family:inherit;">
-          <option value="all" ${searchCategory==='all'?'selected':''}>전체</option>
-          <option value="author" ${searchCategory==='author'?'selected':''}>의견자</option>
-          <option value="title" ${searchCategory==='title'?'selected':''}>제목</option>
-          <option value="time" ${searchCategory==='time'?'selected':''}>상신시간</option>
-          <option value="status" ${searchCategory==='status'?'selected':''}>상태</option>
-          <option value="content" ${searchCategory==='content'?'selected':''}>의견 내용</option>
-        </select>
-        <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="flex:1;">
+      <div class="top-search" style="display: flex; gap: 8px; flex-wrap: nowrap; align-items: center;">
+        <div style="display:flex; flex:1; height:38px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:transparent;">
+          <select id="searchCat" style="width:auto; padding:0 4px 0 10px; border:none; background:transparent; font-size:15px; font-family:inherit; outline:none; border-right:1px solid var(--line); border-radius:0;">
+            <option value="all" ${searchCategory==='all'?'selected':''}>전체</option>
+            <option value="author" ${searchCategory==='author'?'selected':''}>의견자</option>
+            <option value="title" ${searchCategory==='title'?'selected':''}>제목</option>
+            <option value="time" ${searchCategory==='time'?'selected':''}>시간</option>
+            <option value="status" ${searchCategory==='status'?'selected':''}>상태</option>
+            <option value="content" ${searchCategory==='content'?'selected':''}>내용</option>
+          </select>
+          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="border:none; margin:0; padding-left:10px; flex:1; height:100%; border-radius:0; min-width:0;">
+        </div>
         <button class="gray" onclick="doSearch()">검색</button>
       </div>
-      <div class="top-search">
-        <button class="gray" onclick="doSearch()">검색</button>
-        <input id="q" placeholder="검색어 입력" value="${esc(keyword)}">
-      </div>
       <div class="table-wrapper">
         <table>
           <colgroup><col style="width: 45px;"><col><col style="width: 75px;"></colgroup>
@@ -628,11 +626,33 @@ function decide(dbId, who, val, isEdit = false){
 
 function doSearch(){ searchCategory = document.getElementById("searchCat").value; keyword = document.getElementById("q").value.trim(); render(); }
 function openStats(){
-  const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const author = item.author || "딸"; const month = item.time.substring(0,7).replace("-","년 ") + "월"; if(!stats[author]) stats[author] = {}; if(!stats[author][month]) stats[author][month] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[author][month].app++; stats[author][month].appS+=c; } else { stats[author][month].rej++; stats[author][month].rejS+=c; } });
+  const now = new Date(); const curYear = String(now.getFullYear()); const curMonthStr = curYear + "-" + String(now.getMonth()+1).padStart(2, '0');
+  let sumYear = {app:0, appS:0, rej:0, rejS:0}; let sumMonth = {app:0, appS:0, rej:0, rejS:0};
+  const stats = {};
+  allData.filter(x => getStatus(x) !== "대기").forEach(item => {
+    const s = getStatus(item), c = Number(item.cost), timeStr = item.time.substring(0,7), itemYear = item.time.substring(0,4);
+    if(itemYear === curYear) { if(s==="찬성"){ sumYear.app++; sumYear.appS+=c; } else { sumYear.rej++; sumYear.rejS+=c; } }
+    if(timeStr === curMonthStr) { if(s==="찬성"){ sumMonth.app++; sumMonth.appS+=c; } else { sumMonth.rej++; sumMonth.rejS+=c; } }
+    const author = item.author || "딸"; const month = timeStr.replace("-","년 ") + "월";
+    if(!stats[author]) stats[author] = {}; if(!stats[author][month]) stats[author][month] = {app:0, appS:0, rej:0, rejS:0};
+    if(s==="찬성"){ stats[author][month].app++; stats[author][month].appS+=c; } else { stats[author][month].rej++; stats[author][month].rejS+=c; }
+  });
   const m = document.getElementById("statModal"); m.style.display="flex";
-  let html = `<div class="card"><h3>구성원별 월간 통계</h3><div class="table-wrapper">`;
-  Object.keys(stats).sort().forEach(author => { const mem = (config.members||[]).find(x => x.name === author); const icon = mem ? mem.icon : '👤'; html += `<div class="stat-item"><b style="font-size:16px; color:var(--brand);">${icon} ${author}</b><br>`; Object.keys(stats[author]).sort().reverse().forEach(month => { const d = stats[author][month]; html += `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);"><b>${month}</b><br>⭕ 찬성: ${d.app}건 (${d.appS.toLocaleString()}원) <br>❌ 반대: ${d.rej}건 (${d.rejS.toLocaleString()}원)</div>`; }); html += `</div>`; });
-  html += `</div><button onclick="closeModalStat()">닫기</button></div>`; m.innerHTML = html;
+  let html = `<div class="card"><h3>전체 통계 요약</h3>`;
+  html += `<div style="margin-bottom:15px; padding:12px; background:#f9fafb; border-radius:8px; border:1px solid var(--line); line-height:1.6;">`;
+  html += `<b>📊 ${curYear}년 누적</b><br><span style="font-size:14px;">⭕ 찬성: ${sumYear.app}건 (${sumYear.appS.toLocaleString()}원)<br>❌ 반대: ${sumYear.rej}건 (${sumYear.rejS.toLocaleString()}원)</span><br><br>`;
+  html += `<b>📅 이번 달 (${now.getMonth()+1}월)</b><br><span style="font-size:14px;">⭕ 찬성: ${sumMonth.app}건 (${sumMonth.appS.toLocaleString()}원)<br>❌ 반대: ${sumMonth.rej}건 (${sumMonth.rejS.toLocaleString()}원)</span></div>`;
+  html += `<h3>구성원별 상세 통계</h3><div class="table-wrapper" style="max-height: 400px;">`;
+  Object.keys(stats).sort().forEach(author => {
+    const mem = (config.members||[]).find(x => x.name === author); const icon = mem ? mem.icon : '👤';
+    html += `<div class="stat-item"><b style="font-size:16px; color:var(--brand);">${icon} ${author}</b>`;
+    Object.keys(stats[author]).sort().reverse().forEach(month => {
+      const d = stats[author][month];
+      html += `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);"><b>${month}</b><br>⭕ 찬성: ${d.app}건 (${d.appS.toLocaleString()}원) <br>❌ 반대: ${d.rej}건 (${d.rejS.toLocaleString()}원)</div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div><button style="margin-top:15px;" onclick="closeModalStat()">닫기</button></div>`; m.innerHTML = html;
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } else { window.history.back(); } };
