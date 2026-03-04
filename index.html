@@ -611,7 +611,7 @@ function decide(dbId, who, val, isEdit = false){
 
 function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
 function openStats(){
-  let yStats = {}, mStats = {}, memMonthly = {};
+  let yStats = {}, yMonthly = {}, mStats = {}, memMonthly = {};
   const getMemIcon = (n) => { const mb = (config.members||[]).find(m=>m.name===n); return mb ? mb.icon : '👤'; };
   allData.filter(x => getStatus(x) !== "대기").forEach(item => {
     const year = item.time.substring(0,4) + "년";
@@ -620,16 +620,20 @@ function openStats(){
     const s = getStatus(item), c = Number(item.cost);
     const isApp = s === "찬성";
     if(!yStats[year]) yStats[year] = {app:0, appS:0, rej:0, rejS:0};
+    if(!yMonthly[year]) yMonthly[year] = {};
+    if(!yMonthly[year][month]) yMonthly[year][month] = {app:0, appS:0, rej:0, rejS:0};
     if(!mStats[author]) mStats[author] = {app:0, appS:0, rej:0, rejS:0, icon: getMemIcon(author)};
     if(!memMonthly[author]) memMonthly[author] = {};
     if(!memMonthly[author][month]) memMonthly[author][month] = {app:0, appS:0, rej:0, rejS:0};
-    
+    
     if(isApp){
       yStats[year].app++; yStats[year].appS+=c;
+      yMonthly[year][month].app++; yMonthly[year][month].appS+=c;
       mStats[author].app++; mStats[author].appS+=c;
       memMonthly[author][month].app++; memMonthly[author][month].appS+=c;
     } else {
       yStats[year].rej++; yStats[year].rejS+=c;
+      yMonthly[year][month].rej++; yMonthly[year][month].rejS+=c;
       mStats[author].rej++; mStats[author].rejS+=c;
       memMonthly[author][month].rej++; memMonthly[author][month].rejS+=c;
     }
@@ -638,12 +642,19 @@ function openStats(){
   let html = `<div class="card" style="width:100%; max-width:600px;">`;
   html += `<h3 style="margin-top:0;">📊 연도별 누적 집계표</h3>`;
   Object.keys(yStats).sort().reverse().forEach(y => {
-    html += `<div class="stat-item" style="background:#f0f9ff;"><b>${y} 총계</b><br>⭕ 찬성: ${yStats[y].app}건 (${yStats[y].appS.toLocaleString()}원)<br>❌ 반대: ${yStats[y].rej}건 (${yStats[y].rejS.toLocaleString()}원)</div>`;
+    html += `<div class="stat-item" style="cursor:pointer; background:#f0f9ff;" onclick="const el=document.getElementById('y-stat-${y}'); el.style.display=el.style.display==='none'?'block':'none';">`;
+    html += `<b>${y} 총계 (클릭하여 월별 보기)</b><br>⭕ 찬성: ${yStats[y].app}건 (${yStats[y].appS.toLocaleString()}원)<br>❌ 반대: ${yStats[y].rej}건 (${yStats[y].rejS.toLocaleString()}원)`;
+    html += `<div id="y-stat-${y}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
+    Object.keys(yMonthly[y]).sort().reverse().forEach(mo => {
+      const md = yMonthly[y][mo];
+      html += `<div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:10px; margin-bottom:6px; font-size:14px;"><b>${mo}</b><br>⭕ 찬성: ${md.app}건 (${md.appS.toLocaleString()}원) <br>❌ 반대: ${md.rej}건 (${md.rejS.toLocaleString()}원)</div>`;
+    });
+    html += `</div></div>`;
   });
 
   html += `<h3 style="margin-top:20px;">👥 구성원별 누적 집계표</h3>`;
   Object.keys(mStats).forEach(m => {
-    html += `<div class="stat-item" style="cursor:pointer; background:#fff;" onclick="const el=document.getElementById('m-stat-${m}'); el.style.display=el.style.display==='none'?'block':'none';">`;
+    html += `<div class="stat-item" style="cursor:pointer; background:#f0f9ff;" onclick="const el=document.getElementById('m-stat-${m}'); el.style.display=el.style.display==='none'?'block':'none';">`;
     html += `<b>${mStats[m].icon} ${m} (클릭하여 월별 보기)</b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원) | ❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
     html += `<div id="m-stat-${m}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
     Object.keys(memMonthly[m]).sort().reverse().forEach(mo => {
@@ -653,7 +664,7 @@ function openStats(){
     html += `</div></div>`;
   });
   html += `<button style="margin-top:15px;" onclick="closeModalStat()">닫기</button></div>`;
-  
+  
   const mod = document.getElementById("statModal"); mod.style.display="flex"; mod.innerHTML = html;
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
