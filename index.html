@@ -91,8 +91,8 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .holiday-red { color: red; }
 .holiday-black { color: black; }
 .cal-event-container { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; flex: 1; }
-.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip; }
-.many-events .cal-event-item { -webkit-line-clamp: 1; }
+.cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+.many-events .cal-event-item { white-space: nowrap; }
 .cal-event-item.repeated { background-color: #fef9c3; }
 .cal-event-item.multi-day { background-color: #dcfce7; }
 .btn-repeat-action { background: #fff !important; color: #000 !important; border: 1px solid var(--line) !important; margin: 4px 0 !important; font-weight: 500 !important; width: 100%; }
@@ -134,6 +134,7 @@ const tenantPath = `tenants/${tenantId}`;
 let config = { entryPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!", members: [{name:"아빠", icon:"👨", pw:"1111"}, {name:"엄마", icon:"👩", pw:"1111"}, {name:"딸", icon:"👧", pw:"1111"}] };
 let route = { page: "list", id: null, date: null };
 let keyword = "";
+let searchCategory = "all";
 let allData = [];
 let calendarData = {};
 let currentCalDate = new Date();
@@ -208,19 +209,40 @@ function render(){
   header.style.display = (route.page === "calendar") ? "none" : "block";
 
   if(route.page === "list"){
-    let displayData = [...allData];
-    if(keyword) displayData = displayData.filter(x => JSON.stringify(x).includes(keyword));
-    displayData.sort((a,b) => b.time.localeCompare(a.time));
-    const readList = JSON.parse(localStorage.getItem('readApprovals') || '[]');
+    let displayData = [...allData];
+    if(keyword) {
+      displayData = displayData.filter(x => {
+        if(searchCategory === "author") return (x.author||'딸').includes(keyword);
+        if(searchCategory === "title") return (x.title||'').includes(keyword);
+        if(searchCategory === "time") return (x.time||'').includes(keyword);
+        if(searchCategory === "status") return getStatus(x).includes(keyword);
+        if(searchCategory === "content") return (x.purpose||'').includes(keyword) || (x.plan||'').includes(keyword);
+        return JSON.stringify(x).includes(keyword) || getStatus(x).includes(keyword);
+      });
+    }
+    displayData.sort((a,b) => b.time.localeCompare(a.time));
+    const readList = JSON.parse(localStorage.getItem('readApprovals') || '[]');
 
-    /* [끼워넣기] 🔒 자물쇠 아이콘 버튼 삽입 */
-    app.innerHTML = `
-      <div class="top-actions">
-        <button class="btn-submit" onclick="navigate({page:'new'})">의견 올리기</button>
-        <button class="btn-stats" onclick="openStats()">통계</button>
-        <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
-        <button class="btn-config" onclick="openConfigAuth()">🔒</button>
-      </div>
+    /* [끼워넣기] 🔒 자물쇠 아이콘 버튼 삽입 */
+    app.innerHTML = `
+      <div class="top-actions">
+        <button class="btn-submit" onclick="navigate({page:'new'})">의견 올리기</button>
+        <button class="btn-stats" onclick="openStats()">통계</button>
+        <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
+        <button class="btn-config" onclick="openConfigAuth()">🔒</button>
+      </div>
+      <div class="top-search">
+        <select id="searchCat" style="width:auto; padding:0 8px; height:38px; border-radius:8px; border:1px solid var(--line); font-size:14px; font-family:inherit;">
+          <option value="all" ${searchCategory==='all'?'selected':''}>전체</option>
+          <option value="author" ${searchCategory==='author'?'selected':''}>의견자</option>
+          <option value="title" ${searchCategory==='title'?'selected':''}>제목</option>
+          <option value="time" ${searchCategory==='time'?'selected':''}>상신시간</option>
+          <option value="status" ${searchCategory==='status'?'selected':''}>상태</option>
+          <option value="content" ${searchCategory==='content'?'selected':''}>의견 내용</option>
+        </select>
+        <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="flex:1;">
+        <button class="gray" onclick="doSearch()">검색</button>
+      </div>
       <div class="top-search">
         <button class="gray" onclick="doSearch()">검색</button>
         <input id="q" placeholder="검색어 입력" value="${esc(keyword)}">
@@ -519,7 +541,7 @@ function transKo(v){ return v === "approve" ? "찬성" : (v === "reject" ? "반�
 function renderLog(name, res, comm, time) {
     const member = (config.members||[]).find(m => m.name === name);
     const userIcon = member ? member.icon + ' ' : '';
-    const icon = res === 'approve' ? '✅' : (res === 'reject' ? '❌' : '⏳');
+    const icon = res === 'approve' ? '⭕' : (res === 'reject' ? '❌' : '⏳');
     return `<div style="margin-bottom:15px;"><b>${userIcon}${name}: ${icon} ${transKo(res)} ${time ? '/ '+time : ''}</b><br><div style="margin-top:8px; padding-left:10px; color:#555;">의견: ${esc(comm || "-")}</div></div>`;
 }
 
@@ -604,11 +626,13 @@ function decide(dbId, who, val, isEdit = false){
     });
 }
 
-function doSearch(){ keyword = document.getElementById("q").value.trim(); render(); }
+function doSearch(){ searchCategory = document.getElementById("searchCat").value; keyword = document.getElementById("q").value.trim(); render(); }
 function openStats(){
-  const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const author = item.author || "딸"; const key = item.time.substring(0,7).replace("-","년 ") + "월 [" + author + "]"; if(!stats[key]) stats[key] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[key].app++; stats[key].appS+=c; } else { stats[key].rej++; stats[key].rejS+=c; } });
-  const sorted = Object.keys(stats).sort().reverse(), m = document.getElementById("statModal"); m.style.display="flex";
-  m.innerHTML = `<div class="card"><h3>구성원별 월간 통계</h3><div class="table-wrapper">${sorted.map(k=>`<div class="stat-item"><b>${k}</b><br>✅ 찬성: ${stats[k].app}건 (${stats[k].appS.toLocaleString()}원) <br>❌ 반대: ${stats[k].rej}건 (${stats[k].rejS.toLocaleString()}원)</div>`).join("")}</div><button onclick="closeModalStat()">닫기</button></div>`;
+  const stats = {}; allData.filter(x => getStatus(x) !== "대기").forEach(item => { const author = item.author || "딸"; const month = item.time.substring(0,7).replace("-","년 ") + "월"; if(!stats[author]) stats[author] = {}; if(!stats[author][month]) stats[author][month] = {app:0, appS:0, rej:0, rejS:0}; const s = getStatus(item), c = Number(item.cost); if(s==="찬성"){ stats[author][month].app++; stats[author][month].appS+=c; } else { stats[author][month].rej++; stats[author][month].rejS+=c; } });
+  const m = document.getElementById("statModal"); m.style.display="flex";
+  let html = `<div class="card"><h3>구성원별 월간 통계</h3><div class="table-wrapper">`;
+  Object.keys(stats).sort().forEach(author => { const mem = (config.members||[]).find(x => x.name === author); const icon = mem ? mem.icon : '👤'; html += `<div class="stat-item"><b style="font-size:16px; color:var(--brand);">${icon} ${author}</b><br>`; Object.keys(stats[author]).sort().reverse().forEach(month => { const d = stats[author][month]; html += `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--line);"><b>${month}</b><br>⭕ 찬성: ${d.app}건 (${d.appS.toLocaleString()}원) <br>❌ 반대: ${d.rej}건 (${d.rejS.toLocaleString()}원)</div>`; }); html += `</div>`; });
+  html += `</div><button onclick="closeModalStat()">닫기</button></div>`; m.innerHTML = html;
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } else { window.history.back(); } };
@@ -616,4 +640,3 @@ history.replaceState({page:'list'}, "");
 </script>
 </body>
 </html>
-
