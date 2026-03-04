@@ -233,10 +233,10 @@ function render(){
         <button class="btn-cal" onclick="navigate({page:'calendar'})">캘린더</button>
         <button class="btn-config" onclick="openConfigAuth()">🔒</button>
       </div>
-      <div class="top-search">
-        <button class="gray" onclick="doSearch()">검색</button>
+      <div class="top-search" style="display:flex; gap:4px; align-items:center; flex-wrap:nowrap; margin-bottom:16px;">
+        <button class="gray" onclick="doSearch()" style="margin:0; width:60px; min-width:60px; height:38px; padding:0; white-space:nowrap; flex-shrink:0;">검색</button>
         <div style="display:flex; flex:1; align-items:center; background:#fff; border:1px solid var(--line); border-radius:8px; height:38px; overflow:hidden;">
-          <select id="searchCat" style="border:none; background:transparent; font-size:15px; font-family:inherit; outline:none; padding:0 4px 0 10px; color:#333; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; width:auto; font-weight:bold;">
+          <select id="searchCat" style="border:none; background:transparent; font-size:14px; font-family:inherit; outline:none; padding:0 4px 0 8px; color:#555; cursor:pointer; -webkit-appearance:none; -moz-appearance:none; appearance:none; width:auto; font-weight:600;">
             <option value="all" ${searchCategory==='all'?'selected':''}>전체 ▾</option>
             <option value="author" ${searchCategory==='author'?'selected':''}>의견자 ▾</option>
             <option value="title" ${searchCategory==='title'?'selected':''}>제목 ▾</option>
@@ -244,10 +244,9 @@ function render(){
             <option value="status" ${searchCategory==='status'?'selected':''}>상태 ▾</option>
             <option value="content" ${searchCategory==='content'?'selected':''}>내용 ▾</option>
           </select>
-          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="border:none; margin:0; padding:0 10px; flex:1; height:100%; border-radius:0; min-width:0; background:transparent; outline:none;">
+          <div style="width:1px; height:16px; background:var(--line); margin:0 4px;"></div>
+          <input id="q" placeholder="검색어 입력" value="${esc(keyword)}" style="flex:1; border:none; margin:0; padding:0 8px; height:100%; min-width:0; background:transparent; outline:none; font-size:15px;">
         </div>
-      </div>
-        <button class="gray" onclick="doSearch()" style="margin:0; width:60px; min-width:60px; height:38px; padding:0; white-space:nowrap;">검색</button>
       </div>
       <div class="table-wrapper">
         <table>
