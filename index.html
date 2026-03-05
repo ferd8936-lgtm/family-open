@@ -131,7 +131,7 @@ const tenantId = urlParams.get('f') || 'default';
 const tenantPath = `tenants/${tenantId}`;
 
 /* [끼워넣기] DB에서 불러올 공간별 설정 로직 (기본값 1111) */
-let config = { entryPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!", members: [{name:"아빠", icon:"👨", pw:"1111"}, {name:"엄마", icon:"👩", pw:"1111"}, {name:"딸", icon:"👧", pw:"1111"}] };
+let config = { entryPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!", members: [] };
 let route = { page: "list", id: null, date: null };
 let keyword = "";
 let allData = [];
@@ -149,12 +149,16 @@ const holidays = {
 
 /* [끼워넣기] 테넌트 설정 데이터 실시간 로드 및 헤더 반영 */
 db.ref(`${tenantPath}/config`).on("value", (snap) => {
-    if(snap.exists()) {
-        config = snap.val();
-        document.querySelector("header h1").innerText = "🏡" + config.headerTitle;
-        document.getElementById("header-desc").innerText = config.headerDesc;
-        if(isAuthorized) render();
-    }
+    if(snap.exists()) {
+        const val = snap.val();
+        config.entryPw = val.entryPw || "1111";
+        config.headerTitle = val.headerTitle || "똑똑!! 가족 게시판";
+        config.headerDesc = val.headerDesc || "응원해!";
+        config.members = val.members || [];
+        document.querySelector("header h1").innerText = "🏡 " + config.headerTitle;
+        document.getElementById("header-desc").innerText = config.headerDesc;
+        if(isAuthorized) render();
+    }
 });
 
 /* [수정] 데이터 수신 경로를 테넌트별 경로로 변경 */
@@ -643,7 +647,7 @@ function openStats(){
   html += `<h3 style="margin-top:0;">📊 연도별 누적 집계표</h3>`;
   Object.keys(yStats).sort().reverse().forEach(y => {
     html += `<div class="stat-item" style="cursor:pointer; background:#f0f9ff;" onclick="const el=document.getElementById('y-stat-${y}'); el.style.display=el.style.display==='none'?'block':'none';">`;
-    html += `<b>${y} 총계</b><br>⭕ 찬성: ${yStats[y].app}건 (${yStats[y].appS.toLocaleString()}원)<br>❌ 반대: ${yStats[y].rej}건 (${yStats[y].rejS.toLocaleString()}원)`;
+    html += `<b>${y} 총계 (${yStats[y].app + yStats[y].rej}건)</b><br>⭕ 찬성: ${yStats[y].app}건 (${yStats[y].appS.toLocaleString()}원)<br>❌ 반대: ${yStats[y].rej}건 (${yStats[y].rejS.toLocaleString()}원)`;
     html += `<div id="y-stat-${y}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
     Object.keys(yMonthly[y]).sort().reverse().forEach(mo => {
       const md = yMonthly[y][mo];
@@ -655,7 +659,7 @@ function openStats(){
   html += `<h3 style="margin-top:20px;">👥 구성원별 누적 집계표</h3>`;
   Object.keys(mStats).forEach(m => {
     html += `<div class="stat-item" style="cursor:pointer; background:#f0f9ff;" onclick="const el=document.getElementById('m-stat-${m}'); el.style.display=el.style.display==='none'?'block':'none';">`;
-    html += `<b>${mStats[m].icon} ${m} </b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원)<br>❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
+    html += `<b>${mStats[m].icon} ${m} (${mStats[m].app + mStats[m].rej}건)</b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원) | ❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
     html += `<div id="m-stat-${m}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
     Object.keys(memMonthly[m]).sort().reverse().forEach(mo => {
       const md = memMonthly[m][mo];
