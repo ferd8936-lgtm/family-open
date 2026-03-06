@@ -659,7 +659,7 @@ function openStats(){
   html += `<h3 style="margin-top:20px;">👥 구성원별 누적 집계표</h3>`;
   Object.keys(mStats).forEach(m => {
     html += `<div class="stat-item" style="cursor:pointer; background:#f0f9ff;" onclick="const el=document.getElementById('m-stat-${m}'); el.style.display=el.style.display==='none'?'block':'none';">`;
-    html += `<b>${mStats[m].icon} ${m} (${mStats[m].app + mStats[m].rej}건)</b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원) | ❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
+    html += `<b>${mStats[m].icon} ${m} (${mStats[m].app + mStats[m].rej}건)</b><br>⭕ 찬성: ${mStats[m].app}건 (${mStats[m].appS.toLocaleString()}원)<br>❌ 반대: ${mStats[m].rej}건 (${mStats[m].rejS.toLocaleString()}원)`;
     html += `<div id="m-stat-${m}" style="display:none; padding-top:10px; margin-top:10px; border-top:1px dashed var(--line);">`;
     Object.keys(memMonthly[m]).sort().reverse().forEach(mo => {
       const md = memMonthly[m][mo];
