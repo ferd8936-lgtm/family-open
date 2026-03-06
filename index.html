@@ -257,11 +257,11 @@ function render(){
           /* [끼워넣기] SaaS 환경설정 페이지 삽입 */
           app.innerHTML = `
             <div class="card">
-                <h3>환경설정 (${tenantId})</h3>
-                <label>접속 비밀번호 (공통)</label>
-                <input id="setEntryPw" type="text" value="${config.entryPw}">
-                <label style="margin-top:20px;">구성원 관리 (이름, 이모지, 비밀번호)</label>
-                <div id="memberConfigArea" style="margin-top:10px;">
+                <h3 style="margin:0;">환경설정 (${tenantId})</h3>
+                <label style="margin-top:20px;">접속 비밀번호 (공통)</label>
+                <input id="setEntryPw" type="text" value="${config.entryPw}" style="margin-top:10px;">
+                <label style="margin-top:20px;">구성원 관리 (이름, 이모지, 비밀번호)</label>
+                <div id="memberConfigArea" style="margin-top:10px;">
                     ${(config.members || []).map((m, idx) => `
                         <div style="display:flex; flex-wrap:nowrap; gap:4px; margin-bottom:8px; align-items:center; width:100%;">
                             <select id="memName_${idx}" style="flex:1.2; min-width:0; height:40px; padding:0 4px; box-sizing:border-box; margin:0; border-radius:8px; border:1px solid var(--line); font-size:14px; font-family:inherit; word-break:keep-all;">
