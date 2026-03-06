@@ -259,29 +259,29 @@ function render(){
             <div class="card">
                 <h3 style="margin:0;">환경설정 (${tenantId})</h3>
                 <label style="margin-top:10px;">접속 비밀번호 (공통)</label>
-                <input id="setEntryPw" type="text" value="${config.entryPw}" style="margin-top:5px;">
+                <input id="setEntryPw" type="text" value="${config.entryPw}" style="margin-top:2px;">
                 <label style="margin-top:10px;">구성원 관리 (이름, 이모지, 비밀번호)</label>
-                <div id="memberConfigArea" style="margin-top:5px;">
-                    ${(config.members || []).map((m, idx) => `
-                        <div style="display:flex; flex-wrap:nowrap; gap:4px; margin-bottom:8px; align-items:center; width:100%;">
-                            <select id="memName_${idx}" style="flex:1.2; min-width:0; height:40px; padding:0 4px; box-sizing:border-box; margin:0; border-radius:8px; border:1px solid var(--line); font-size:14px; font-family:inherit; word-break:keep-all;">
-                                ${['아빠', '엄마', '딸', '아들', '큰딸', '작은딸', '큰아들', '작은아들'].map(opt => `<option value="${opt}" ${m.name===opt?'selected':''}>${opt}</option>`).join('')}
-                            </select>
-                            <select id="memIcon_${idx}" style="flex:0.8; min-width:0; height:40px; padding:0 4px; box-sizing:border-box; margin:0; border-radius:8px; border:1px solid var(--line); font-size:14px; font-family:inherit;">
-                                ${['👨', '👩', '👧', '👦', '👱‍♀️', '👱‍♂️', '👶', '👴', '👵', '🐶', '🐱', '🐻', '🐰'].map(opt => `<option value="${opt}" ${m.icon===opt?'selected':''}>${opt}</option>`).join('')}
-                            </select>
-                            <input type="text" id="memPw_${idx}" value="${m.pw}" placeholder="비밀번호" style="flex:1.2; min-width:0; height:40px; padding:0 8px; box-sizing:border-box; margin:0; font-size:14px;">
-                            <button class="small red" style="flex:0 0 35px; min-width:35px; height:40px; padding:0; margin:0; font-size:16px; font-weight:bold;" onclick="this.parentElement.remove()">X</button>
-                        </div>
-                    `).join('')}
-                </div>
-                <button class="gray" style="margin-top:10px;" onclick="addMemberInput()">+ 구성원 추가</button>
-                <div class="btn-row" style="margin-top:20px;">
-                    <button style="white-space:nowrap; word-break:keep-all;" onclick="saveConfig()">저장하기</button>
-                    <button class="gray" style="white-space:nowrap; word-break:keep-all;" onclick="navigate({page:'list'})">취소</button>
-                </div>
-            </div>`;
-      }
+                <div id="memberConfigArea" style="margin-top:2px;">
+                    ${(config.members || []).map((m, idx) => `
+                        <div style="display:flex; flex-wrap:nowrap; gap:4px; margin-bottom:8px; align-items:center; width:100%;">
+                            <select id="memName_${idx}" style="flex:1.2; min-width:0; height:40px; padding:0 4px; box-sizing:border-box; margin:0; border-radius:8px; border:1px solid var(--line); font-size:14px; font-family:inherit; word-break:keep-all;">
+                                ${['아빠', '엄마', '딸', '아들', '큰딸', '작은딸', '큰아들', '작은아들'].map(opt => `<option value="${opt}" ${m.name===opt?'selected':''}>${opt}</option>`).join('')}
+                            </select>
+                            <select id="memIcon_${idx}" style="flex:0.8; min-width:0; height:40px; padding:0 4px; box-sizing:border-box; margin:0; border-radius:8px; border:1px solid var(--line); font-size:14px; font-family:inherit;">
+                                ${['👨', '👩', '👧', '👦', '👱‍♀️', '👱‍♂️', '👶', '👴', '👵', '🐶', '🐱', '🐻', '🐰'].map(opt => `<option value="${opt}" ${m.icon===opt?'selected':''}>${opt}</option>`).join('')}
+                            </select>
+                            <input type="text" id="memPw_${idx}" value="${m.pw}" placeholder="비밀번호" style="flex:1.2; min-width:0; height:40px; padding:0 8px; box-sizing:border-box; margin:0; font-size:14px;">
+                            <button class="small red" style="flex:0 0 35px; min-width:35px; height:40px; padding:0; margin:0; font-size:16px; font-weight:bold;" onclick="this.parentElement.remove()">X</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="gray" style="margin-top:10px;" onclick="addMemberInput()">+ 구성원 추가</button>
+                <div class="btn-row" style="margin-top:10px;">
+                    <button style="white-space:nowrap; word-break:keep-all;" onclick="saveConfig()">저장하기</button>
+                    <button class="gray" style="white-space:nowrap; word-break:keep-all;" onclick="navigate({page:'list'})">취소</button>
+                </div>
+            </div>`;
+      }
   else if(route.page === "new"){
     app.innerHTML = `<div class="card">
       <label>누가 올리나요?</label>
