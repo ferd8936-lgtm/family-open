@@ -453,7 +453,7 @@ function renderCalendarDetail(container) {
 }
 
 function toggleTimeInput(isAllDay) { const wrapper = document.getElementById('timeInputWrapper'); if(wrapper) wrapper.style.display = isAllDay ? 'none' : 'block'; }
-function setEditCal(id) { const dateKey = route.date; const ev = calendarData[dateKey][id]; if(ev.repeated) { const m = document.getElementById("pwModal"); m.style.display="flex"; m.innerHTML=`<div class="card" style="text-align:center;"><b>반복 일정 수정 안내</b><p style="margin-top:10px;">매월 반복 일정은 내용만 수정이 가능하며, 일정 수정은 삭제 후 다시 등록해주세요.</p><button class="fit gray" style="margin-top:15px;" onclick="closeModal(); editingCalId='${id}'; render();">확인</button></div>`; return; } editingCalId = id; render(); }
+function setEditCal(id) { const dateKey = route.date; const ev = calendarData[dateKey][id]; if(ev.repeated) { const m = document.getElementById("pwModal"); m.style.display="flex"; m.innerHTML=`<div class="card" style="text-align:center;"><b>반복 일정 수정 안내</b><p style="margin-top:10px;">매월 반복 일정은 내용만 수정이 가능하며,<br>일정 수정은 삭제 후 다시 등록해주세요.</p><button class="fit gray" style="margin-top:15px;" onclick="closeModal(); editingCalId='${id}'; render();">확인</button></div>`; return; } editingCalId = id; render(); }
 
 function askDeleteCalMode(dateKey, id, isRepeated, repeatId) {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
