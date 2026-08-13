@@ -132,7 +132,7 @@ const tenantPath = `tenants/${tenantId}`;
 
 /* [끼워넣기] DB에서 불러올 공간별 설정 로직 (기본값 1111) */
 let config = { entryPw: "1111", headerTitle: "똑똑!! 가족 게시판", headerDesc: "응원해!", members: [] };
-let route = { page: "list", id: null, date: null };
+let route = { page: "calendar", id: null, date: null };
 let keyword = "";
 let allData = [];
 let calendarData = {};
@@ -191,7 +191,7 @@ function verifyEntryPw() {
     } else { alert("비밀번호가 일치하지 않습니다."); }
 }
 
-function goHome() { navigate({page:'list'}); }
+function goHome() { navigate({page:'calendar'}); }
 
 function navigate(p, push=true){ 
     route = p; 
@@ -673,7 +673,7 @@ function openStats(){
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } else { window.history.back(); } };
-history.replaceState({page:'list'}, "");
+history.replaceState({page:'calendar'}, "");
 </script>
 </body>
 </html>
