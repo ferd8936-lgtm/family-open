@@ -136,11 +136,11 @@ let route = { page: "calendar", id: null, date: null };
 let keyword = "";
 let allData = [];
 let calendarData = {};
-let memoData = { common: "", monthly: {} };
 let currentCalDate = new Date();
 let tempParentInput = {};
 let editingCalId = null;
 let isAuthorized = localStorage.getItem(`auth_${tenantId}`) === "true"; 
+let memoData = "";
 
 const holidays = {
     "01-01": { name: "신정", red: true }, "03-01": { name: "삼일절", red: true }, "05-01": { name: "근로자의날", red: false }, "05-05": { name: "어린이날", red: true }, "05-08": { name: "어버이날", red: false }, "06-06": { name: "현충일", red: true }, "08-15": { name: "광복절", red: true }, "10-01": { name: "국군의날", red: false }, "10-03": { name: "개천절", red: true }, "10-09": { name: "한글날", red: true }, "12-25": { name: "성탄절", red: true },
@@ -178,8 +178,8 @@ db.ref(`${tenantPath}/calendar_v3`).on("value", (snapshot) => {
   if(isAuthorized && (route.page === 'calendar' || route.page === 'calDetail')) render();
 });
 
-db.ref(`${tenantPath}/memos`).on("value", (snapshot) => {
-  memoData = snapshot.val() || { common: "", monthly: {} };
+db.ref(`${tenantPath}/memo`).on("value", (snapshot) => {
+  memoData = snapshot.val() || "";
   if(isAuthorized && route.page === 'memo') render();
 });
 
@@ -215,7 +215,7 @@ function render(){
   const app = document.getElementById("app");
   const header = document.getElementById("main-header");
   document.body.classList.remove("full-view");
-  header.style.display = (route.page === "calendar") ? "none" : "block";
+  header.style.display = (route.page === "calendar" || route.page === "memo") ? "none" : "block";
 
   if(route.page === "list"){
     let displayData = [...allData];
@@ -325,7 +325,18 @@ function render(){
   }
   else if(route.page === "calendar"){ document.body.classList.add("full-view"); renderCalendarView(app); }
   else if(route.page === "calDetail"){ renderCalendarDetail(app); }
-  else if(route.page === "memo"){ renderMemoView(app); }
+  else if(route.page === "memo"){
+    document.body.classList.add("full-view");
+    app.innerHTML = `<div style="display:flex; flex-direction:column; height:100dvh; background:#fff;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:8px;" onclick="navigate({page:'calendar'})"><span style="font-size:20px; cursor:pointer;">◀</span><b style="font-size:20px;">📝 메모장</b></div>
+        <button id="btnMemoEdit" class="small gray" style="width:auto; margin:0; padding:6px 14px;" onclick="toggleMemoEdit()">수정</button>
+      </div>
+      <div style="flex:1; overflow:hidden; display:flex; flex-direction:column; padding:16px;">
+        <textarea id="memoContent" disabled style="flex:1; width:100%; border:none; resize:none; font-size:16px; line-height:1.6; outline:none; padding:0; background:transparent; overflow-y:auto;" placeholder="메모를 입력하세요...">${esc(memoData)}</textarea>
+      </div>
+    </div>`;
+  }
 }
 
 /* [끼워넣기] 부모 인증 및 설정 저장 함수 삽입 */
@@ -390,7 +401,7 @@ function submit(){
 function renderCalendarView(container) {
     const currentYear = currentCalDate.getFullYear();
     const currentMonth = currentCalDate.getMonth();
-    container.innerHTML = `<div class="cal-wrapper"><div class="cal-header"><button class="gray small" onclick="changeMonth(-1)">◀</button><b style="font-size:20px; cursor:pointer; text-decoration:underline;" onclick="navigate({page:'memo', year: ${currentYear}, month: ${currentMonth + 1}})">${currentYear}년 ${currentMonth + 1}월</b><button class="gray small" onclick="changeMonth(1)">▶</button></div><div class="cal-container" id="calContainer"><div class="cal-month-view" id="prevMonthView"></div><div class="cal-month-view" id="currMonthView"></div><div class="cal-month-view" id="nextMonthView"></div></div><div class="cal-footer"><button class="gray" onclick="editingCalId=null; navigate({page:'list'})">게시판 돌아가기</button></div></div>`;
+    container.innerHTML = `<div class="cal-wrapper"><div class="cal-header"><button class="gray small" onclick="changeMonth(-1)">◀</button><b style="font-size:20px; cursor:pointer;" onclick="navigate({page:'memo'})">${currentYear}년 ${currentMonth + 1}월</b><button class="gray small" onclick="changeMonth(1)">▶</button></div><div class="cal-container" id="calContainer"><div class="cal-month-view" id="prevMonthView"></div><div class="cal-month-view" id="currMonthView"></div><div class="cal-month-view" id="nextMonthView"></div></div><div class="cal-footer"><button class="gray" onclick="editingCalId=null; navigate({page:'list'})">게시판 돌아가기</button></div></div>`;
     renderMonthGrid(new Date(currentYear, currentMonth - 1, 1), document.getElementById('prevMonthView'));
     renderMonthGrid(new Date(currentYear, currentMonth, 1), document.getElementById('currMonthView'));
     renderMonthGrid(new Date(currentYear, currentMonth + 1, 1), document.getElementById('nextMonthView'));
@@ -680,40 +691,21 @@ function openStats(){
 }
 function closeModalStat() { document.getElementById("statModal").style.display="none"; }
 
-function renderMemoView(container) {
-    const y = route.year; const m = String(route.month).padStart(2, '0'); const ymKey = `${y}-${m}`;
-    const commonMemo = memoData.common || "";
-    const monthlyMemo = (memoData.monthly && memoData.monthly[ymKey]) || "";
-    container.innerHTML = `<div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h2 style="margin:0; font-size:1.2rem;">📝 ${y}년 ${route.month}월 메모장</h2>
-            <button id="btnMemoEdit" class="small gray" style="width:auto; margin:0;" onclick="toggleMemoEdit('${ymKey}')">수정</button>
-        </div>
-        <label style="margin-top:0; color:var(--brand);">📌 공통 메모 (항상 보임)</label>
-        <textarea id="memoCommon" class="purpose-box" style="height:150px !important;" disabled>${esc(commonMemo)}</textarea>
-        <label>📅 ${route.month}월 메모</label>
-        <textarea id="memoMonthly" class="purpose-box" style="height:200px !important;" disabled>${esc(monthlyMemo)}</textarea>
-        <div class="btn-row" style="margin-top:15px;">
-            <button class="gray" onclick="navigate({page:'calendar'})">캘린더로 돌아가기</button>
-        </div>
-    </div>`;
-}
-
-function toggleMemoEdit(ymKey) {
+function toggleMemoEdit() {
     const btn = document.getElementById("btnMemoEdit");
-    const commonBox = document.getElementById("memoCommon");
-    const monthlyBox = document.getElementById("memoMonthly");
+    const textarea = document.getElementById("memoContent");
     if(btn.innerText !== "저장") {
-        commonBox.disabled = false; monthlyBox.disabled = false;
-        btn.innerText = "저장"; btn.classList.remove("gray"); btn.classList.add("green");
+        textarea.disabled = false;
+        textarea.focus();
+        btn.innerText = "저장";
+        btn.classList.remove("gray");
+        btn.classList.add("green");
     } else {
-        const updates = {};
-        updates[`${tenantPath}/memos/common`] = commonBox.value.trim();
-        updates[`${tenantPath}/memos/monthly/${ymKey}`] = monthlyBox.value.trim();
-        db.ref().update(updates).then(() => {
-            commonBox.disabled = true; monthlyBox.disabled = true;
-            btn.innerText = "수정"; btn.classList.remove("green"); btn.classList.add("gray");
-            alert("메모가 저장되었습니다.");
+        db.ref(`${tenantPath}/memo`).set(textarea.value).then(() => {
+            textarea.disabled = true;
+            btn.innerText = "수정";
+            btn.classList.remove("green");
+            btn.classList.add("gray");
         });
     }
 }
