@@ -141,6 +141,7 @@ let tempParentInput = {};
 let editingCalId = null;
 let isAuthorized = localStorage.getItem(`auth_${tenantId}`) === "true"; 
 let memoData = "";
+let auditData = [];
 
 const holidays = {
     "01-01": { name: "신정", red: true }, "03-01": { name: "삼일절", red: true }, "05-01": { name: "근로자의날", red: false }, "05-05": { name: "어린이날", red: true }, "05-08": { name: "어버이날", red: false }, "06-06": { name: "현충일", red: true }, "08-15": { name: "광복절", red: true }, "10-01": { name: "국군의날", red: false }, "10-03": { name: "개천절", red: true }, "10-09": { name: "한글날", red: true }, "12-25": { name: "성탄절", red: true },
@@ -183,6 +184,11 @@ db.ref(`${tenantPath}/memo`).on("value", (snapshot) => {
   if(isAuthorized && route.page === 'memo') render();
 });
 
+db.ref(`${tenantPath}/audit`).on("value", (snapshot) => {
+  auditData = snapshot.val() || [];
+  if(isAuthorized && route.page === 'audit') render();
+});
+
 window.onload = () => { if(!isAuthorized) checkEntryPassword(); else render(); }
 
 function checkEntryPassword() {
@@ -215,7 +221,7 @@ function render(){
   const app = document.getElementById("app");
   const header = document.getElementById("main-header");
   document.body.classList.remove("full-view");
-  header.style.display = (route.page === "calendar" || route.page === "memo") ? "none" : "block";
+  header.style.display = (route.page === "calendar" || route.page === "memo" || route.page === "audit") ? "none" : "block";
 
   if(route.page === "list"){
     let displayData = [...allData];
@@ -329,11 +335,77 @@ function render(){
     document.body.classList.add("full-view");
     app.innerHTML = `<div style="display:flex; flex-direction:column; height:100dvh; background:#fff;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-shrink:0;">
-        <div style="display:flex; align-items:center; gap:8px;" onclick="navigate({page:'calendar'})"><span style="font-size:20px; cursor:pointer;">◀</span><b style="font-size:20px;">📝 메모장</b></div>
-        <button id="btnMemoEdit" class="small gray" style="width:auto; margin:0; padding:6px 14px;" onclick="toggleMemoEdit()">수정</button>
+        <div style="display:flex; align-items:center; gap:8px;" onclick="navigate({page:'calendar'})"><span style="font-size:20px; cursor:pointer;">🔙</span><b style="font-size:20px;"></b></div>
+        <div style="display:flex; gap:4px;">
+          <button class="small gray" style="width:auto; margin:0; padding:6px 14px;" onclick="navigate({page:'audit'})">감리</button>
+          <button id="btnMemoEdit" class="small gray" style="width:auto; margin:0; padding:6px 14px;" onclick="toggleMemoEdit()">수정</button>
+        </div>
       </div>
       <div style="flex:1; overflow:hidden; display:flex; flex-direction:column; padding:16px;">
         <textarea id="memoContent" disabled style="flex:1; width:100%; border:none; resize:none; font-size:16px; line-height:1.6; outline:none; padding:0; background:transparent; overflow-y:auto;" placeholder="메모를 입력하세요...">${esc(memoData)}</textarea>
+      </div>
+    </div>`;
+  }
+  else if(route.page === "audit"){
+    document.body.classList.add("full-view");
+    let rowsHtml = "";
+    const defData = auditData && auditData.length > 0 ? auditData : [
+      {no:'1', site:'월성초', date:'8.18화', content:'- 교육청 방문(상견례)\n- 공사업체 회사 방문', dist:'150\n41,400', toll:'왕복\n4,000', meal:'1인\n10,000', total:'55,400'},
+      {no:'2', site:'환경교육센터', date:'8.21금', content:'- 현장 방문 후 공정 파악\n- 공사업체 파악 및 컨텍', dist:'150\n41,400', toll:'왕복\n4,000', meal:'1인\n10,000', total:'55,400'},
+      {no:'3', site:'월성초', date:'8.25화', content:'- 교육청 변경 착수계 제출\n- 현장 방문 및 공정 파악', dist:'150\n41,400', toll:'왕복\n4,000', meal:'1인\n10,000', total:'55,400'},
+      {no:'4', site:'환경교육센터', date:'8.28금', content:'- 현장 점검 및 도면 검토\n . 3층 방화구획 개선 지도 등\n- 감리, 건설사 상견례', dist:'150\n41,400', toll:'왕복\n4,000', meal:'1인\n10,000', total:'55,400'},
+      {no:'5', site:'월성초', date:'8.31월', content:'- 교육청 방문 협의\n (대수선 허가, 내진설계 등)\n- 소방서 착공신고 방문 협의', dist:'150\n41,400', toll:'왕복\n4,000', meal:'1인\n10,000', total:'55,400'}
+    ];
+    rowsHtml = defData.map(r => `<tr>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:30px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${esc(r.no||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:70px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${esc(r.site||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:60px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${esc(r.date||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:140px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:left; resize:none;" rows="2">${esc(r.content||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:50px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${esc(r.dist||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:50px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${esc(r.toll||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:50px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${esc(r.meal||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:60px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${esc(r.total||'')}</textarea></td>
+    </tr>`).join("");
+
+    app.innerHTML = `<div style="display:flex; flex-direction:column; height:100dvh; background:#fff;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:8px;" onclick="navigate({page:'memo'})"><span style="font-size:20px; cursor:pointer;">🔙</span><b style="font-size:18px;">업무/경비 일지</b></div>
+        <div style="display:flex; gap:4px;">
+          <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="downloadAuditExcel()">다운로드</button>
+          <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="addAuditRow()">행 추가</button>
+          <button id="btnAuditSave" class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="saveAudit()">등록</button>
+        </div>
+      </div>
+      <div style="flex:1; overflow:auto; padding:16px;">
+        <div style="font-size:14px; line-height:1.5; margin-bottom:12px; color:#000;">
+          <b style="font-size:16px;">■ 업무/경비 일지</b><br><br>
+          ※ 모닝(경차) 유류비 단가 276원<br>
+          ① 유류비 : 1,840원 ÷ 15km = 123원<br>
+          ② 차량감가상각비 : (1,800만 원 ÷ 2 ÷ 5년) ÷ 15,600km = 115원<br>
+          ③ 소모품/정비비 등 : 60만 ÷ 15,600km = 38원
+        </div>
+        <div style="overflow-x:auto; border-top:2px solid #000; padding-top:2px;">
+          <table id="auditTable" style="width:max-content; min-width:100%; border-collapse:collapse; text-align:center; font-size:13px; color:#000;">
+            <thead>
+              <tr>
+                <th rowspan="2" style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">NO</th>
+                <th rowspan="2" style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">현장명</th>
+                <th rowspan="2" style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">일정</th>
+                <th rowspan="2" style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">주요내용</th>
+                <th colspan="3" style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">경비</th>
+                <th rowspan="2" style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">합계</th>
+              </tr>
+              <tr>
+                <th style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">운행거리</th>
+                <th style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">통행료</th>
+                <th style="border:1px solid #000; padding:6px; background:#e5e7eb; font-weight:bold;">식대</th>
+              </tr>
+            </thead>
+            <tbody id="auditTbody">
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>`;
   }
@@ -708,6 +780,50 @@ function toggleMemoEdit() {
             btn.classList.add("gray");
         });
     }
+}
+
+function addAuditRow() {
+  const tbody = document.getElementById("auditTbody");
+  const nextNo = tbody.children.length + 1;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:30px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2">${nextNo}</textarea></td><td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:70px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2"></textarea></td><td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:60px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2"></textarea></td><td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:140px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:left; resize:none;" rows="2"></textarea></td><td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:50px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2"></textarea></td><td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:50px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2"></textarea></td><td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:50px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2"></textarea></td><td style="border:1px solid #000; padding:0;"><textarea style="width:100%; min-width:60px; border:none; background:transparent; font-size:13px; font-family:inherit; padding:6px; text-align:center; resize:none;" rows="2"></textarea></td>`;
+  tbody.appendChild(tr);
+}
+
+function saveAudit() {
+  const btn = document.getElementById("btnAuditSave");
+  btn.innerText = "저장중..";
+  const tbody = document.getElementById("auditTbody");
+  const data = [];
+  for(let i=0; i<tbody.children.length; i++) {
+    const txts = tbody.children[i].querySelectorAll("textarea");
+    data.push({ no: txts[0].value, site: txts[1].value, date: txts[2].value, content: txts[3].value, dist: txts[4].value, toll: txts[5].value, meal: txts[6].value, total: txts[7].value });
+  }
+  db.ref(`${tenantPath}/audit`).set(data).then(() => {
+    btn.innerText = "등록";
+    alert("저장되었습니다.");
+  });
+}
+
+function downloadAuditExcel() {
+  const table = document.getElementById("auditTable");
+  let csv = "\uFEFF";
+  for (let i = 0; i < table.rows.length; i++) {
+    let row = [];
+    const cols = table.rows[i].querySelectorAll("th, td");
+    for (let j = 0; j < cols.length; j++) {
+      let data = cols[j].innerText;
+      if(cols[j].querySelector("textarea")) data = cols[j].querySelector("textarea").value;
+      data = data.replace(/"/g, '""');
+      row.push('"' + data + '"');
+    }
+    csv += row.join(",") + "\n";
+  }
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "감리일지_" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click();
 }
 
 window.onpopstate = (e) => { if(e.state) { route = e.state; render(); } else { window.history.back(); } };
