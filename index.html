@@ -337,9 +337,8 @@ function render(){
       <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-shrink:0;">
         <div style="display:flex; align-items:center; gap:8px;" onclick="navigate({page:'calendar'})"><span style="font-size:20px; cursor:pointer;">🔙</span><b style="font-size:20px;"></b></div>
         <div style="display:flex; gap:4px;">
-          <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="downloadAuditExcel()">다운로드</button>
-          <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="addAuditRow()">행 추가</button>
-          <button id="btnAuditSave" class="small green" style="width:auto; margin:0; padding:6px 10px;" onclick="saveAudit()">저장</button>
+          <button class="small gray" style="width:auto; margin:0; padding:6px 14px;" onclick="navigate({page:'audit'})">감리</button>
+          <button id="btnMemoEdit" class="small gray" style="width:auto; margin:0; padding:6px 14px;" onclick="toggleMemoEdit()">수정</button>
         </div>
       </div>
       <div style="flex:1; overflow:hidden; display:flex; flex-direction:column; padding:16px;">
@@ -374,7 +373,7 @@ function render(){
         <div style="display:flex; gap:4px;">
           <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="downloadAuditExcel()">다운로드</button>
           <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="addAuditRow()">행 추가</button>
-          <button id="btnAuditSave" class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="saveAudit()">저장</button>
+          <button id="btnAuditSave" class="small green" style="width:auto; margin:0; padding:6px 10px;" onclick="saveAudit()">저장</button>
         </div>
       </div>
       <div style="flex:1; overflow:auto; padding:16px;">
