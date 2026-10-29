@@ -81,20 +81,21 @@ td.title{text-align:left; line-height:1.35; word-break: break-all;}
 .cal-header button { width: 34px !important; height: 34px; padding: 0 !important; font-size: 14px; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, 1fr); background: var(--line); gap: 1px; flex: 1; border-bottom: 1px solid var(--line); width: 100%; overflow: hidden; }
 .cal-day-label { background: #fdfdfd; padding: 8px 0; text-align: center; font-size: 13px; font-weight: bold; }
-.cal-day { background: #fff; padding: 4px; font-size: 13.2px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; font-family: 'NexonLv2Gothic', sans-serif; }
+.cal-day { background: #fff; padding: 4px; font-size: 13.2px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; position: relative; min-width: 0; min-height: 0; font-family: 'NexonLv2Gothic', sans-serif; }
 .cal-day-num-box { display: flex; align-items: center; gap: 4px; }
 .cal-day.sun, .cal-day.holiday { color: red; }
 .cal-day.sat { color: blue; }
 .cal-day.other { color: #ccc !important; background: #fafafa; }
-.cal-day.today { background: #fff; outline: 1px solid #000; outline-offset: -1px; z-index: 1; }
+.cal-day.today { background: #fff; outline: 1px solid #000; outline-offset: -1px; }
 .holiday-text { font-size: 10.8px; font-weight: bold; line-height: 1; display: inline-block; font-family: 'NexonLv2Gothic', sans-serif; margin-left: 2px; white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 75%; }
 .holiday-red { color: red; }
 .holiday-black { color: black; }
-.cal-event-container { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; flex: 1; }
+.cal-event-container { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: visible; flex: 1; }
 .cal-event-item { color: #000; background-color: #eef2ff; padding: 1px 4px; border-radius: 2px; font-size: 10.8px; line-height: 1.1; width: 100%; display: block; overflow: hidden; word-break: break-all; white-space: normal; text-overflow: clip; max-height: 26px; }
 .many-events .cal-event-item { max-height: 14px; }
 .cal-event-item.repeated { background-color: #fef9c3; }
-.cal-event-item.multi-day { background-color: #dcfce7; }
+.cal-event-item.multi-day { background-color: #dcfce7; position: relative; z-index: 5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 15px; max-height: 15px; line-height: 13px; text-align: center; pointer-events: none; }
+.cal-event-item.multi-day-spacer { background: transparent; height: 15px; max-height: 15px; pointer-events: none; }
 .btn-repeat-action { background: #fff !important; color: #000 !important; border: 1px solid var(--line) !important; margin: 4px 0 !important; font-weight: 500 !important; width: 100%; }
 .cal-footer { padding: 10px 15px; background: #fff; flex-shrink: 0; border-top: 1px solid var(--line); }
 .flex-align-center { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
@@ -357,23 +358,23 @@ function render(){
       {no:'5', site:'월성초', date:'8.31월', content:'- 교육청 방문 협의\n (대수선 허가, 내진설계 등)\n- 소방서 착공신고 방문 협의', dist:'150\n41,400', toll:'왕복\n4,000', meal:'1인\n10,000', total:'55,400'}
     ];
     rowsHtml = defData.map(r => `<tr>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.no||'')}</textarea></td>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.site||'')}</textarea></td>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.date||'')}</textarea></td>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px; text-align:left; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.content||'')}</textarea></td>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.dist||'')}</textarea></td>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.toll||'')}</textarea></td>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.meal||'')}</textarea></td>
-      <td style="border:1px solid #000; padding:0;"><textarea style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.total||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.no||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.site||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.date||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px; text-align:left; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this)">${esc(r.content||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.dist||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.toll||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.meal||'')}</textarea></td>
+      <td style="border:1px solid #000; padding:0;"><textarea disabled style="width:100%; border:none; background:transparent; font-size:16px; font-family:inherit; padding:4px 0; text-align:center; align-content:center; resize:none; overflow:hidden;" rows="2" oninput="autoResize(this); this.value=formatAuditMoney(this.value);">${esc(r.total||'')}</textarea></td>
     </tr>`).join("");
 
     app.innerHTML = `<div style="display:flex; flex-direction:column; height:100dvh; background:#fff;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; border-bottom:1px solid var(--line); flex-shrink:0;">
         <div style="display:flex; align-items:center; gap:8px;" onclick="navigate({page:'memo'})"><span style="font-size:20px; cursor:pointer;">🔙</span><b style="font-size:18px;"></b></div>
         <div style="display:flex; gap:4px;">
-          <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="downloadAuditExcel()">다운로드</button>
-          <button class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="addAuditRow()">행 추가</button>
-          <button id="btnAuditSave" class="small green" style="width:auto; margin:0; padding:6px 10px;" onclick="saveAudit()">저장</button>
+          <button id="btnAuditDownload" class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="downloadAuditExcel()">다운로드</button>
+          <button id="btnAuditAddRow" class="small gray" style="width:auto; margin:0; padding:6px 10px; display:none;" onclick="addAuditRow()">행 추가</button>
+          <button id="btnAuditSave" class="small gray" style="width:auto; margin:0; padding:6px 10px;" onclick="saveAudit()">수정</button>
         </div>
       </div>
       <div style="flex:1; overflow:auto; padding:16px;">
@@ -519,15 +520,26 @@ function renderDayCell(y, m, d, isOther) {
     if(dayOfWeek === 0 || (holiday && holiday.red)) cls += ' holiday';
     if(dayOfWeek === 6) cls += ' sat';
     let events = calendarData[dateKey] ? Object.values(calendarData[dateKey]) : [];
-    events.sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+    events.sort((a, b) => {
+        const aMulti = (a.endDate && a.endDate !== a.startDate) ? 0 : 1;
+        const bMulti = (b.endDate && b.endDate !== b.startDate) ? 0 : 1;
+        if(aMulti !== bMulti) return aMulti - bMulti;
+        if(aMulti === 0) return (a.startDate || "").localeCompare(b.startDate || "") || (a.repeatId || "").localeCompare(b.repeatId || "");
+        return (a.time || "00:00").localeCompare(b.time || "00:00");
+    });
     const cellCls = events.length >= 4 ? 'many-events' : '';
     
     const eventHtml = events.map(ev => {
-        let multiCls = "";
         if(ev.endDate && ev.endDate !== ev.startDate) {
-            multiCls = "multi-day ";
+            if(dateKey === ev.startDate || dayOfWeek === 0) {
+                const daysLeft = Math.round((new Date(ev.endDate) - new Date(dateKey)) / 86400000) + 1;
+                const span = Math.max(1, Math.min(daysLeft, 7 - dayOfWeek));
+                return `<div class="cal-event-item ${ev.repeated ? 'repeated' : ''} multi-day" style="width:calc(${span * 100}% + ${(span - 1) * 9}px);">${esc(ev.title)}</div>`;
+            } else {
+                return `<div class="cal-event-item multi-day-spacer"></div>`;
+            }
         }
-        return `<div class="cal-event-item ${ev.repeated ? 'repeated' : ''} ${multiCls}">${esc(ev.title)}</div>`;
+        return `<div class="cal-event-item ${ev.repeated ? 'repeated' : ''}">${esc(ev.title)}</div>`;
     }).join('');
 
     return `<div class="cal-day ${cls} ${cellCls}" onclick="editingCalId=null; navigate({page:'calDetail', date:'${dateKey}'})"><div class="cal-day-num-box"><b style="font-size:13.2px;">${d}</b>${holiday ? `<span class="holiday-text ${holiday.red ? 'holiday-red' : 'holiday-black'}">${holiday.name}</span>` : ''}</div><div class="cal-event-container">${eventHtml}</div></div>`;
@@ -537,27 +549,27 @@ function renderCalendarDetail(container) {
     const dateKey = route.date;
     let events = calendarData[dateKey] ? Object.entries(calendarData[dateKey]) : [];
     events.sort((a, b) => (a[1].time || "00:00").localeCompare(b[1].time || "00:00"));
-    let editTitle = "", editTime = "12:00", editContent = "", isRepeated = false, editEndDate = dateKey, isAllDay = false, editStartDate = dateKey;
+    let editTitle = "", editTime = "12:00", editContent = "", isRepeated = false, isRepeatedWeekly = false, editEndDate = dateKey, isAllDay = false, editStartDate = dateKey;
     if(editingCalId && calendarData[dateKey] && calendarData[dateKey][editingCalId]) {
         const target = calendarData[dateKey][editingCalId]; 
-        editTitle = target.title; editTime = target.time || "12:00"; editContent = target.content; isRepeated = target.repeated || false; editEndDate = target.endDate || dateKey; isAllDay = target.isAllDay || false; editStartDate = target.startDate || dateKey;
+        editTitle = target.title; editTime = target.time || "12:00"; editContent = target.content; isRepeated = target.repeated || false; isRepeatedWeekly = target.repeatWeekly || false; editEndDate = target.endDate || dateKey; isAllDay = target.isAllDay || false; editStartDate = target.startDate || dateKey;
     }
     const isEditingRepeated = editingCalId && isRepeated;
     const titleText = editingCalId ? `${dateKey} 일정 수정` : `${dateKey} 일정 추가`;
     const btnText = editingCalId ? "수정하기" : "추가하기";
-    container.innerHTML = `<div class="card"><h2 style="margin-top:0; font-size: 1.2rem;">${titleText}</h2><label>제목</label><input id="calTitle" placeholder="일정 제목을 입력하세요" value="${esc(editTitle)}" ${isEditingRepeated ? 'disabled' : ''}>
+    container.innerHTML = `<div class="card"><h2 style="margin-top:0; font-size: 1.2rem;">${titleText}</h2><label>제목</label><input id="calTitle" placeholder="일정 제목을 입력하세요" value="${esc(editTitle)}">
     <div style="display:flex; gap:10px;"><div style="flex:1;"><label>시작일</label><input type="date" id="calStartDate" value="${editStartDate}" ${isEditingRepeated ? 'disabled' : ''} onchange="document.getElementById('calEndDate').value = this.value;"></div><div style="flex:1;"><label>종료일</label><input type="date" id="calEndDate" value="${editEndDate}" ${isEditingRepeated ? 'disabled' : ''}></div></div>
     <div style="display:flex; align-items:center; gap:15px; margin-top:10px;"><div id="timeInputWrapper" style="flex:1; display: ${isAllDay ? 'none' : 'block'};"><label style="margin-top:0;">시간</label><input id="calTime" type="time" style="margin-top:4px;" value="${editTime}" ${isEditingRepeated ? 'disabled' : ''}></div><div class="flex-align-center" style="margin-top:18px;"><input type="checkbox" id="calAllDay" ${isAllDay ? 'checked' : ''} onchange="toggleTimeInput(this.checked)" ${isEditingRepeated ? 'disabled' : ''}><label for="calAllDay">하루종일</label></div></div>
-    <label>내용</label><textarea id="calContent" rows="3" placeholder="상세 내용을 입력하세요">${esc(editContent)}</textarea><div class="flex-align-center"><input type="checkbox" id="calRepeat" ${isRepeated ? 'checked' : ''} ${editingCalId ? 'disabled' : ''}><label for="calRepeat">매월 같은 날에 일정 반영</label></div>${isEditingRepeated ? `<p style="color:red; font-size:12px; margin-top:5px;"></p><button onclick="saveCal('${dateKey}')">${btnText}</button>` : `<button onclick="saveCal('${dateKey}')">${btnText}</button>`}<hr style="margin:20px 0; border:0; border-top:1px solid var(--line);"><b style="display:block; margin-bottom:10px;">저장된 일정 (${events.length})</b>${events.map(([id, ev]) => {
+    <label>내용</label><textarea id="calContent" rows="3" placeholder="상세 내용을 입력하세요">${esc(editContent)}</textarea><div class="flex-align-center"><input type="checkbox" id="calRepeat" ${(isRepeated && !isRepeatedWeekly) ? 'checked' : ''} ${editingCalId ? 'disabled' : ''} onchange="if(this.checked) document.getElementById('calRepeatWeekly').checked=false;"><label for="calRepeat">매월 같은 날에 일정 반영</label></div><div class="flex-align-center"><input type="checkbox" id="calRepeatWeekly" ${isRepeatedWeekly ? 'checked' : ''} ${editingCalId ? 'disabled' : ''} onchange="if(this.checked) document.getElementById('calRepeat').checked=false;"><label for="calRepeatWeekly">매주 같은 요일에 일정 반영</label></div>${isEditingRepeated ? `<p style="color:red; font-size:12px; margin-top:5px;"></p><button onclick="saveCal('${dateKey}')">${btnText}</button>` : `<button onclick="saveCal('${dateKey}')">${btnText}</button>`}<hr style="margin:20px 0; border:0; border-top:1px solid var(--line);"><b style="display:block; margin-bottom:10px;">저장된 일정 (${events.length})</b>${events.map(([id, ev]) => {
         const isMulti = ev.endDate && ev.endDate !== ev.startDate;
         let timeLabel = ev.isAllDay ? '하루종일' : (ev.time || '');
         if(isMulti) timeLabel += ` (${ev.startDate} ~ ${ev.endDate})`;
-        return `<div style="background:#f9fafb; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;" onclick="setEditCal('${id}')"><div style="flex:1; margin-right:10px;"><small style="color:var(--brand); font-weight:bold;">${timeLabel} ${ev.repeated ? '(매월)' : ''}</small><br><b style="font-size:14px;">${esc(ev.title || '')}</b><br><span style="font-size:12.5px; color:#555;">${esc(ev.content || '')}</span></div><button class="small red" style="width:50px;" onclick="event.stopPropagation(); askDeleteCalMode('${dateKey}', '${id}', ${ev.repeated}, '${ev.repeatId}')">삭제</button></div>`;
+        return `<div style="background:#f9fafb; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;" onclick="setEditCal('${id}')"><div style="flex:1; margin-right:10px;"><small style="color:var(--brand); font-weight:bold;">${timeLabel} ${ev.repeatWeekly ? '(매주)' : (ev.repeated ? '(매월)' : '')}</small><br><b style="font-size:14px;">${esc(ev.title || '')}</b><br><span style="font-size:12.5px; color:#555;">${esc(ev.content || '')}</span></div><button class="small red" style="width:50px;" onclick="event.stopPropagation(); askDeleteCalMode('${dateKey}', '${id}', ${ev.repeated}, '${ev.repeatId}')">삭제</button></div>`;
     }).join('') || '<p style="color:#999; font-size:14px;">저장된 일정이 없습니다.</p>'}<button class="gray" style="margin-top:10px;" onclick="editingCalId=null; navigate({page:'calendar'})">뒤로가기</button></div>`;
 }
 
 function toggleTimeInput(isAllDay) { const wrapper = document.getElementById('timeInputWrapper'); if(wrapper) wrapper.style.display = isAllDay ? 'none' : 'block'; }
-function setEditCal(id) { const dateKey = route.date; const ev = calendarData[dateKey][id]; if(ev.repeated) { const m = document.getElementById("pwModal"); m.style.display="flex"; m.innerHTML=`<div class="card" style="text-align:center;"><b>반복 일정 수정 안내</b><p style="margin-top:10px;">매월 반복 일정은 내용만 수정이 가능하며,<br>일정 수정은 삭제 후 다시 등록해주세요.</p><button class="fit gray" style="margin-top:15px;" onclick="closeModal(); editingCalId='${id}'; render();">확인</button></div>`; return; } editingCalId = id; render(); }
+function setEditCal(id) { const dateKey = route.date; const ev = calendarData[dateKey][id]; if(ev.repeated) { const m = document.getElementById("pwModal"); m.style.display="flex"; m.innerHTML=`<div class="card" style="text-align:center;"><b>반복 일정 수정 안내</b><p style="margin-top:10px;">반복 일정은 제목과 내용만 수정이 가능하며,<br>일정 수정은 삭제 후 다시 등록해주세요.</p><button class="fit gray" style="margin-top:15px;" onclick="closeModal(); editingCalId='${id}'; render();">확인</button></div>`; return; } editingCalId = id; render(); } m.innerHTML=`<div class="card" style="text-align:center;"><b>반복 일정 수정 안내</b><p style="margin-top:10px;">매월 반복 일정은 내용만 수정이 가능하며,<br>일정 수정은 삭제 후 다시 등록해주세요.</p><button class="fit gray" style="margin-top:15px;" onclick="closeModal(); editingCalId='${id}'; render();">확인</button></div>`; return; } editingCalId = id; render(); }
 
 function askDeleteCalMode(dateKey, id, isRepeated, repeatId) {
     const m = document.getElementById("pwModal"); m.style.display = "flex";
@@ -587,36 +599,54 @@ function doDeleteRepeatRange(currentDate, repeatId, mode) {
 }
 
 function saveCal(dateKey) {
-    const title = document.getElementById("calTitle").value.trim(); const isAllDay = document.getElementById("calAllDay").checked; const time = isAllDay ? "00:00" : document.getElementById("calTime").value; const content = document.getElementById("calContent").value.trim(); const repeat = document.getElementById("calRepeat").checked; const startDate = document.getElementById("calStartDate").value; const endDate = document.getElementById("calEndDate").value;
+    const title = document.getElementById("calTitle").value.trim(); const isAllDay = document.getElementById("calAllDay").checked; const time = isAllDay ? "00:00" : document.getElementById("calTime").value; const content = document.getElementById("calContent").value.trim(); const repeatMonthly = document.getElementById("calRepeat").checked; const repeatWeekly = document.getElementById("calRepeatWeekly").checked; const repeat = repeatMonthly || repeatWeekly; const startDate = document.getElementById("calStartDate").value; const endDate = document.getElementById("calEndDate").value;
     if(!title) return alert("제목을 입력해주세요.");
-    const data = { title, time, content, repeated: repeat, startDate, endDate, isAllDay };
+    const data = { title, time, content, repeated: repeat, repeatWeekly, startDate, endDate, isAllDay };
     if (editingCalId) {
         const oldEv = calendarData[dateKey][editingCalId];
         if (oldEv.repeatId) {
             const updates = {};
-            Object.keys(calendarData).forEach(dk => { Object.keys(calendarData[dk]).forEach(ek => { if(calendarData[dk][ek].repeatId === oldEv.repeatId) updates[`${dk}/${ek}`] = null; }); });
-            db.ref(`${tenantPath}/calendar_v3`).update(updates).then(() => { createNewCalendarEntry(startDate, endDate, repeat, data, oldEv.repeatId); });
+            if (oldEv.repeated) {
+                Object.keys(calendarData).forEach(dk => { Object.keys(calendarData[dk]).forEach(ek => { if(calendarData[dk][ek].repeatId === oldEv.repeatId) { updates[`${dk}/${ek}/title`] = title; updates[`${dk}/${ek}/content`] = content; } }); });
+                db.ref(`${tenantPath}/calendar_v3`).update(updates).then(() => { editingCalId = null; render(); });
+            } else {
+                Object.keys(calendarData).forEach(dk => { Object.keys(calendarData[dk]).forEach(ek => { if(calendarData[dk][ek].repeatId === oldEv.repeatId) updates[`${dk}/${ek}`] = null; }); });
+                db.ref(`${tenantPath}/calendar_v3`).update(updates).then(() => { createNewCalendarEntry(startDate, endDate, repeatMonthly, data, oldEv.repeatId); });
+            }
         } else {
             db.ref(`${tenantPath}/calendar_v3/${dateKey}/${editingCalId}`).update(data).then(() => { editingCalId = null; render(); });
         }
-    } else { createNewCalendarEntry(startDate, endDate, repeat, data); }
+    } else { createNewCalendarEntry(startDate, endDate, repeatMonthly, data); }
 }
 
 function createNewCalendarEntry(startDate, endDate, repeat, data, existingRepeatId = null) {
     const updates = {}; const repeatId = existingRepeatId || "rep_" + Date.now();
+    const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     let start = new Date(startDate); let end = new Date(endDate);
     while(start <= end) {
-        const dStr = start.getFullYear() + '-' + String(start.getMonth() + 1).padStart(2, '0') + '-' + String(start.getDate()).padStart(2, '0');
+        const dStr = fmt(start);
         const newKey = db.ref(`${tenantPath}/calendar_v3/${dStr}`).push().key; updates[`${dStr}/${newKey}`] = { ...data, repeatId }; start.setDate(start.getDate() + 1);
     }
     if (repeat) {
         for(let i=1; i<12; i++) {
             let mStart = new Date(startDate); mStart.setMonth(mStart.getMonth() + i); let mEnd = new Date(endDate); mEnd.setMonth(mEnd.getMonth() + i);
             if (mStart.getDate() !== new Date(startDate).getDate()) continue;
+            const sStr = fmt(mStart), eStr = fmt(mEnd);
             let cur = new Date(mStart);
             while(cur <= mEnd) {
-                const dStr = cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0');
-                const newKey = db.ref(`${tenantPath}/calendar_v3/${dStr}`).push().key; updates[`${dStr}/${newKey}`] = { ...data, repeatId }; cur.setDate(cur.getDate() + 1);
+                const dStr = fmt(cur);
+                const newKey = db.ref(`${tenantPath}/calendar_v3/${dStr}`).push().key; updates[`${dStr}/${newKey}`] = { ...data, startDate: sStr, endDate: eStr, repeatId }; cur.setDate(cur.getDate() + 1);
+            }
+        }
+    }
+    if (data.repeatWeekly) {
+        for(let i=1; i<52; i++) {
+            let wStart = new Date(startDate); wStart.setDate(wStart.getDate() + (i * 7)); let wEnd = new Date(endDate); wEnd.setDate(wEnd.getDate() + (i * 7));
+            const sStr = fmt(wStart), eStr = fmt(wEnd);
+            let cur = new Date(wStart);
+            while(cur <= wEnd) {
+                const dStr = fmt(cur);
+                const newKey = db.ref(`${tenantPath}/calendar_v3/${dStr}`).push().key; updates[`${dStr}/${newKey}`] = { ...data, startDate: sStr, endDate: eStr, repeatId }; cur.setDate(cur.getDate() + 1);
             }
         }
     }
@@ -806,6 +836,17 @@ function addAuditRow() {
 
 function saveAudit() {
   const btn = document.getElementById("btnAuditSave");
+  const btnDown = document.getElementById("btnAuditDownload");
+  const btnAdd = document.getElementById("btnAuditAddRow");
+  if(btn.innerText === "수정") {
+    document.querySelectorAll("#auditTbody textarea").forEach(ta => ta.disabled = false);
+    btnDown.style.display = "none";
+    btnAdd.style.display = "block";
+    btn.innerText = "저장";
+    btn.classList.remove("gray");
+    btn.classList.add("green");
+    return;
+  }
   btn.innerText = "저장중..";
   const tbody = document.getElementById("auditTbody");
   const data = [];
@@ -814,7 +855,12 @@ function saveAudit() {
     data.push({ no: txts[0].value, site: txts[1].value, date: txts[2].value, content: txts[3].value, dist: txts[4].value, toll: txts[5].value, meal: txts[6].value, total: txts[7].value });
   }
   db.ref(`${tenantPath}/audit`).set(data).then(() => {
-    btn.innerText = "등록";
+    document.querySelectorAll("#auditTbody textarea").forEach(ta => ta.disabled = true);
+    btnDown.style.display = "block";
+    btnAdd.style.display = "none";
+    btn.innerText = "수정";
+    btn.classList.remove("green");
+    btn.classList.add("gray");
     alert("저장되었습니다.");
   });
 }
